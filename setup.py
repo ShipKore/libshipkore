@@ -30,7 +30,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
-    description="Shipkore tracking library",
+    description="Shipkore tracking library and CLI",
     entry_points={
         'console_scripts': [
             'libshipkore=libshipkore.cli:main',
@@ -45,7 +45,7 @@ setup(
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/innerkorehq/libshipkore',
+    url='https://github.com/shipkore/libshipkore',
     version='0.1.0',
     zip_safe=False,
 )

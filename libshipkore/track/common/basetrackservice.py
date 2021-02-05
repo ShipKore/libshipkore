@@ -10,8 +10,6 @@ class BaseTrackService(BaseService):
         self.provider = provider
 
     def _transform(self):
-        # with open(f"services/transforms/{provider}.jsonnet") as f:
-        #     self.data = transform(f.read(), self.raw_data)
         raise NotImplementedError
 
     def _save(self):
