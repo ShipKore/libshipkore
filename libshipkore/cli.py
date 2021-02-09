@@ -1,7 +1,7 @@
 """Console script for libshipkore."""
 import sys
 import click
-from libshipkore import get_track_data
+from libshipkore.libshipkore import get_track_data
 
 @click.command()
 @click.option('--provider', prompt='Provider', help='Courier partner')

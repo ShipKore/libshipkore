@@ -1,4 +1,4 @@
-from common.baseservice import BaseService
+from libshipkore.common.baseservice import BaseService
 # from geopy.geocoders import Nominatim
 
 class BaseTrackService(BaseService):
@@ -13,12 +13,8 @@ class BaseTrackService(BaseService):
         raise NotImplementedError
 
     def _save(self):
-        # track = Track(**self.data)
-        # fire_db = Firebase()
-        # fire_db.save('Track', track)
+
         pass
 
     def get(self):
-        # fire_db = Firebase()
-        # return fire_db.get('Track', f'{self.provider}_{self.waybill}')
         raise NotImplementedError
