@@ -9,20 +9,26 @@ This is first Open source product of Innerkore Technologies. We are commited to 
 Installation
 -------------
 
-Coming soon
+.. code-block:: python
 
+    pip install libshipkore
 
 Usage
 -------
 
-.. code-block:: python
+As CLI
 
-   python libshipkore/cli.py
+.. code-block:: bash
+
+   libshipkore
 
 It will ask for 2 things
 - Provider (Couries)
 - Waybill (Tracking number) 
 
+As Library
+
+    Coming Soon
 
 Features
 --------
