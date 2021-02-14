@@ -20,9 +20,16 @@ As CLI
 
 .. code-block:: bash
 
-   libshipkore
+   libshipkore providers
 
-It will ask for 2 things
+To get all the supported Couriers.
+
+.. code-block:: bash
+
+   libshipkore track
+
+To track a package in supported Couriers. It will ask for 2 things
+
 - Provider (Couries)
 - Waybill (Tracking number) 
 
@@ -35,12 +42,36 @@ Features
 
 - Tracking through CLI
 - Embeddable as library
+- Give standard response
+- Convert Courier's statuses to standard statuses
+- Convert date & time to timezone specific ISO Format
 
+Sample Response
+---------------
+
+    Coming Soon
+
+Supported Statuses
+------------------
+
+- InfoReceived
+- InTransit
+- OutForDelivery
+- AttemptFail
+- Delivered
+- AvailableForPickup
+- Exception
+- ReverseDelivered
+- ReverseOutForDelivery
+- ReverseInTransit
+- 
 
 Supported Couriers
 -------------------
 
-- Delhivery
+- `Delhivery <https://www.delhivery.com/>`_
+- `Ekart <https://www.delhivery.com/>`_
+
 
 
 Credits

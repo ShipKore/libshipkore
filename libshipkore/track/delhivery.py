@@ -14,6 +14,10 @@ class Delhivery(BaseTrackService):
         'WAITING_SELF_COLLECT': 'AvailableForPickup',
         'LOST': 'Exception',
         '': 'Expired',
+        'DELIVERED_SELLER': 'ReverseDelivered',
+        'OUT_DELIVERY_SELLER': 'ReverseOutForDelivery',
+        'PROD_REPLACED': 'ReverseInTransit',
+        'REVERSAL_REACHED_SEL_CITY': 'ReverseInTransit',
     }
     def __init__(self, waybill, *args, **kwargs):
         super().__init__(waybill, 'delhivery', *args, **kwargs)
@@ -62,8 +66,10 @@ class Delhivery(BaseTrackService):
             'reference_no': waybill_data.get('referenceNo'),
             'package_type': waybill_data.get('packageType'),
             'destination': waybill_data.get('destination'),
+            'client': waybill_data.get('clientName'),
+            'consignee_address': waybill_data.get('consigneeAddress'),
+            'product': waybill_data.get('productName'),
             'receiverName': '',
-            'trackStatus': 'DONE'
         }
         checkpoints = []
         for scan in waybill_data.get('scans', []):
