@@ -1,6 +1,7 @@
 from libshipkore.common.baseservice import BaseService
 # from geopy.geocoders import Nominatim
 
+
 class BaseTrackService(BaseService):
     # geolocator = Nominatim(user_agent="shipkore")
 
@@ -13,7 +14,6 @@ class BaseTrackService(BaseService):
         raise NotImplementedError
 
     def _save(self):
-
         pass
 
     def get(self):

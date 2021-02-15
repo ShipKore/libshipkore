@@ -28,7 +28,7 @@ class BaseService(object):
         raise NotImplementedError
 
     '''
-    This method will convert save self.data to firebase 
+    This method will convert save self.data to firebase
     '''
 
     def _save(self):

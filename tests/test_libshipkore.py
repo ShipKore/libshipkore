@@ -6,7 +6,7 @@ import pytest
 
 from click.testing import CliRunner
 
-from libshipkore import libshipkore
+# from libshipkore import libshipkore
 from libshipkore import cli
 
 

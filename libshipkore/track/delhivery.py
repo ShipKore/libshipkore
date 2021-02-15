@@ -4,21 +4,19 @@ import requests
 
 class Delhivery(BaseTrackService):
     STATUS_MAPPER = {
-        '': 'Pending',
         'WAITING_PICKUP': 'InfoReceived',
         'IN_TRANSIT': 'InTransit',
         'REACHED_DEST_CITY': 'InTransit',
         'OUT_DELIVERY': 'OutForDelivery',
-        '': 'AttemptFail',
         'DELIVERED': 'Delivered',
         'WAITING_SELF_COLLECT': 'AvailableForPickup',
         'LOST': 'Exception',
-        '': 'Expired',
         'DELIVERED_SELLER': 'ReverseDelivered',
         'OUT_DELIVERY_SELLER': 'ReverseOutForDelivery',
         'PROD_REPLACED': 'ReverseInTransit',
         'REVERSAL_REACHED_SEL_CITY': 'ReverseInTransit',
     }
+
     def __init__(self, waybill, *args, **kwargs):
         super().__init__(waybill, 'delhivery', *args, **kwargs)
 
@@ -42,17 +40,15 @@ class Delhivery(BaseTrackService):
             "country_iso3": "IND",
             "status": Delhivery.STATUS_MAPPER.get(scan.get('status', '')),
             "substatus": scan.get('status'),
-            "checkpoint_time": scan.get('scanDateTime','')+'+05:30',
+            "checkpoint_time": scan.get('scanDateTime', '') + '+05:30',
             "state": None,
             "zip": None,
         }
-
 
         return checkpoint
 
     '''
     This method will convert self.raw_data to self.data
-    { {{#with data.[0]}} "checkpoints": [ {{#each scans }} { "slug": "delhivery", "city": "scan.cityLocation}}", "location": "scan.scannedLocation}}", "country_name": "IND", "message": "scan.instructions}}", "country_iso3": "IND", "status": "scan.status}}", "checkpoint_time": "scan.scanDateTime}}+05:30", "state": null, "zip": null }{{#unless @last}},{{/unless}} {{/each}} ], "origin_country_name":"India", "destination_country_name":"India", "scheduled_delivery_date": "{{estimatedDate}}", "waybill": "", "status": "{{hqStatus}}", "origin_courier_name": "Delhivery", "shipment_type": "{{productType}}" {{/with}} }
     '''
 
     def _transform(self):

@@ -3,13 +3,14 @@ import requests
 from bs4 import BeautifulSoup
 from dateutil.parser import parse
 
+
 def get_elem_text(el):
     if el and el.text:
         return el.text.strip()
 
 
 class Ekart(BaseTrackService):
-    
+
     def status_mapper(self, status):
         """
         docstring
@@ -33,7 +34,6 @@ class Ekart(BaseTrackService):
         else:
             return 'Exception'
 
-
     def __init__(self, waybill, *args, **kwargs):
         super().__init__(waybill, 'delhivery', *args, **kwargs)
 
@@ -47,15 +47,13 @@ class Ekart(BaseTrackService):
         # print(self.raw_data)
 
     def _transform_checkpoint(self, scan):
-        status = get_elem_text(scan.find(attrs={"data-title":"Status"}))
-        date = get_elem_text(scan.find(attrs={"data-title":"Date"}))+' , '+get_elem_text(scan.find(attrs={"data-title":"Time"}))+"+5:30"
+        status = get_elem_text(scan.find(attrs={"data-title": "Status"}))
+        date = get_elem_text(scan.find(attrs={"data-title": "Date"})) + ' , ' + get_elem_text(scan.find(attrs={"data-title": "Time"})) + '+5:30'
         parsed_date = parse(date).isoformat()
-
-        print (get_elem_text(scan.find(attrs={"data-title":"Status"})))
 
         checkpoint = {
             "slug": self.provider,
-            "location": get_elem_text(scan.find(attrs={"data-title":"Place"})),
+            "location": get_elem_text(scan.find(attrs={"data-title": "Place"})),
             "country_name": "India",
             "message": status,
             "submessage": status,
@@ -67,17 +65,15 @@ class Ekart(BaseTrackService):
             "zip": None,
         }
 
-
         return checkpoint
 
     '''
     This method will convert self.raw_data to self.data
-    { "origin_courier_name": "Ekart", "origin_country_name": "India", "destination_country_name": "India", "scheduled_delivery_date": "{{scheduled_delivery_date}}", "waybill": "{{waybill}}", "status": "{{status}}", "state": "", "zip": ""{{#if checkpoints}}, "checkpoints": [ {{#each checkpoints}} { "slug": "ekart", "city": "{{this.city}}", "location": "{{this.location}}", "country_name": "India", "message": "{{this.message}}", "country_iso3": "IND", "status": "{{this.status}}", "checkpoint_time": "{{this.checkpoint_time}}" }{{#unless @last}},{{/unless}} {{/each}} ] {{/if}} }
     '''
 
     def _transform(self):
         soup = BeautifulSoup(self.raw_data, 'html.parser')
-        tables = soup.find_all('div',id='no-more-tables')
+        tables = soup.find_all('div', id='no-more-tables')
 
         status = get_elem_text(tables[0].find("td", attrs={"data-title": "Current Status"}))
         data = {
