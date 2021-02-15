@@ -70,7 +70,7 @@ Supported Couriers
 -------------------
 
 - `Delhivery <https://www.delhivery.com/>`_
-- `Ekart <https://www.delhivery.com/>`_
+- `Ekart <https://ekartlogistics.com/>`_
 
 
 

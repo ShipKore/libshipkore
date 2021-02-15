@@ -1,4 +1,4 @@
-from common.baseservice import BaseService
+from libshipkore.common.baseservice import BaseService
 # from geopy.geocoders import Nominatim
 
 class BaseTrackService(BaseService):

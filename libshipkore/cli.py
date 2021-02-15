@@ -1,7 +1,7 @@
 """Console script for libshipkore."""
 import sys
 import click
-from libshipkore import get_track_data, get_providers
+from libshipkore.libshipkore import get_track_data, get_providers
 
 @click.group()
 def track_cli():
