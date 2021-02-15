@@ -28,6 +28,7 @@ def providers():
     print (result)
     return result
 
+main = click.CommandCollection(sources=[track_cli, providers_cli])
+
 if __name__ == "__main__":
-    cli = click.CommandCollection(sources=[track_cli, providers_cli])
-    sys.exit(cli())  # pragma: no cover
+    sys.exit(main())  # pragma: no cover
