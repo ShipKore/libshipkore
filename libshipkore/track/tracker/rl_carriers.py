@@ -2,12 +2,12 @@ from ..common.basetrackservice import BaseTrackService, track_registry
 import requests
 from ..models.model import StatusChoice
 import parsel
-from dateutil.parser import parse
-from bs4 import BeautifulSoup
-import re
+
+# from dateutil.parser import parse
+
 
 def get_elem_text(el):
-    sentence= ""
+    sentence = ""
     if el:
         for word in el:
             s_word = word.strip()
@@ -15,7 +15,8 @@ def get_elem_text(el):
                 sentence = sentence + s_word + " "
         return sentence.strip()
 
-@track_registry.register('rl-carriers')
+
+@track_registry.register("rl-carriers")
 class RLCarriers(BaseTrackService):
     def status_mapper(self, status):
         """
@@ -23,40 +24,46 @@ class RLCarriers(BaseTrackService):
         """
         if status.startswith("Picked Up"):
             return StatusChoice.InTransit.value
-        elif status.startswith('Departed'):
+        elif status.startswith("Departed"):
             return StatusChoice.InTransit.value
         elif status.startswith("Accepted"):
             return StatusChoice.InTransit.value
         elif status.startswith("Arrived"):
             return StatusChoice.InTransit.value
-        elif status.startswith('Out for Delivery'):
+        elif status.startswith("Out for Delivery"):
             return StatusChoice.OutForDelivery.value
-        elif status.startswith('Delivered'):
+        elif status.startswith("Delivered"):
             return StatusChoice.Delivered.value
-        elif 'Delivered' in status:
+        elif "Delivered" in status:
             return StatusChoice.Delivered.value
         else:
-            return 'Exception'
+            return "Exception"
 
     def __init__(self, waybill, *args, **kwargs):
-        super().__init__(waybill, 'rl-carriers', *args, **kwargs)
+        super().__init__(waybill, "rl-carriers", *args, **kwargs)
 
-    '''
+    """
     This method will populate self.raw_data
-    '''
+    """
+
     def _fetch(self):
         self.raw_data = requests.post(
-            ' https://www.rlcarriers.com/freight/shipping/shipment-tracing?source=web',
-            data= {' https://www.rlcarriers.com/freight/shipping/shipment-tracing?source=web': self.waybill}
+            " https://www.rlcarriers.com/freight/shipping/shipment-tracing?source=web",
+            data={
+                " https://www.rlcarriers.com/freight/shipping/shipment-tracing?source=web": self.waybill
+            },
         ).text
         # print(self.raw_data, "####")
 
-    '''
+    """
     This method will convert self.raw_data to self.data
-    '''
+    """
+
     def _transform(self):
-        selector = parsel.Selector(text = self.raw_data)
-        sub_status = selector.xpath('//*[@id="result-container"]/h4/span[3]/text()').get()
+        selector = parsel.Selector(text=self.raw_data)
+        sub_status = selector.xpath(
+            '//*[@id="result-container"]/h4/span[3]/text()'
+        ).get()
         print(sub_status)
         # sub_status = sub_status.strip() if sub_status else ''
 
@@ -104,8 +111,8 @@ class RLCarriers(BaseTrackService):
             "slug": self.provider,
             "location": scan[2],
             "country_name": "Unites States",
-            "message": '',
-            "submessage": '',
+            "message": "",
+            "submessage": "",
             "country_iso3": "US",
             "status": self.status_mapper(scan[1]),
             "substatus": scan[1],

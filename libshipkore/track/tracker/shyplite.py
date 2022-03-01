@@ -8,73 +8,83 @@ from dateutil.parser import parse
 def get_elem_text(el):
     if el:
         el = el.strip()
-        return ' '.join(el.split())
+        return " ".join(el.split())
 
-@track_registry.register('shyplite')
+
+@track_registry.register("shyplite")
 class Shyplite(BaseTrackService):
     def status_mapper(self, status):
         """
         docstring
         """
-        if status.startswith('Shipment Booked'):
+        if status.startswith("Shipment Booked"):
             return StatusChoice.InfoReceived.value
-        elif status.startswith('Picked Up'):
+        elif status.startswith("Picked Up"):
             return StatusChoice.InTransit.value
-        elif status.startswith('In Transit'):
+        elif status.startswith("In Transit"):
             return StatusChoice.InTransit.value
-        elif status.startswith('Out For Delivery'):
+        elif status.startswith("Out For Delivery"):
             return StatusChoice.OutForDelivery.value
-        elif status.startswith('Delivered'):
+        elif status.startswith("Delivered"):
             return StatusChoice.Delivered.value
         else:
-            return 'Exception'
+            return "Exception"
 
     def __init__(self, waybill, *args, **kwargs):
-        super().__init__(waybill, 'shyplite', *args, **kwargs)
+        super().__init__(waybill, "shyplite", *args, **kwargs)
 
-    '''
+    """
     This method will populate self.raw_data
-    '''
+    """
+
     def _fetch(self):
-        self.raw_data = requests.get(
-            f'https://tracklite.in/track/{self.waybill}'
-        ).text
+        self.raw_data = requests.get(f"https://tracklite.in/track/{self.waybill}").text
         # print(self.raw_data, "####")
 
-    '''
+    """
     This method will convert self.raw_data to self.data
-    '''
+    """
+
     def _transform(self):
-        selector = parsel.Selector(text = self.raw_data)
-        print(selector.xpath('/html/body/header/div[2]/div[1]/div/p[3]/time/@datetime').get())
-        sub_status = selector.xpath('/html/body/header/div[2]/div[1]/div/p[1]//text()').get()
+        selector = parsel.Selector(text=self.raw_data)
+        print(
+            selector.xpath(
+                "/html/body/header/div[2]/div[1]/div/p[3]/time/@datetime"
+            ).get()
+        )
+        sub_status = selector.xpath(
+            "/html/body/header/div[2]/div[1]/div/p[1]//text()"
+        ).get()
         date_time = None
-        if sub_status == 'Delivered':
-            date_time = parse(selector.xpath('/html/body/header/div[2]/div[1]/div/p[3]/time/@datetime').get())
-               
+        if sub_status == "Delivered":
+            date_time = parse(
+                selector.xpath(
+                    "/html/body/header/div[2]/div[1]/div/p[3]/time/@datetime"
+                ).get()
+            )
+
         data = {
-            'waybill': self.waybill,
-            'provider': self.provider,
-            'status': self.status_mapper(sub_status),
-            'substatus': sub_status,
-            'estimated_date': None,
-            'delivered_date_time' : date_time,
-            'reference_no' : '',
-            'package_type' : '',
-            'destination' : '',
-            'receiver_name': ''
+            "waybill": self.waybill,
+            "provider": self.provider,
+            "status": self.status_mapper(sub_status),
+            "substatus": sub_status,
+            "estimated_date": None,
+            "delivered_date_time": date_time,
+            "reference_no": "",
+            "package_type": "",
+            "destination": "",
+            "receiver_name": "",
         }
         checkpoints = []
 
         checkpoint_table = selector.xpath('//*[@id="events"]/div')
 
-
         for rows in checkpoint_table:
-            if len(rows.xpath('.//div')) > 1:
-                rows= rows.xpath('.//div') 
+            if len(rows.xpath(".//div")) > 1:
+                rows = rows.xpath(".//div")
                 for row in rows:
-                    date = row.xpath('.//@datetime').get()
-                    row= row.xpath('.//text()').getall()
+                    date = row.xpath(".//@datetime").get()
+                    row = row.xpath(".//text()").getall()
                     row = [ele.strip() for ele in row]
                     if row == [] or len(row) == 1:
                         continue
@@ -82,13 +92,13 @@ class Shyplite(BaseTrackService):
                     # print(row)
                     checkpoints.append(self._transform_checkpoint(row))
             else:
-                date = rows.xpath('.//@datetime').get()
-                row= rows.xpath('.//text()').getall()
+                date = rows.xpath(".//@datetime").get()
+                row = rows.xpath(".//text()").getall()
                 row = [ele.strip() for ele in row]
                 row.append(date)
                 checkpoints.append(self._transform_checkpoint(row))
 
-        data['checkpoints'] = checkpoints
+        data["checkpoints"] = checkpoints
 
         self.data = data
 
