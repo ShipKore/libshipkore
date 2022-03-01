@@ -1,4 +1,4 @@
-from .common.basetrackservice import BaseTrackService
+from ..common.basetrackservice import BaseTrackService, track_registry
 import requests
 from bs4 import BeautifulSoup
 from dateutil.parser import parse
@@ -9,6 +9,7 @@ def get_elem_text(el):
         return el.text.strip()
 
 
+@track_registry.register('ekart')
 class Ekart(BaseTrackService):
 
     def status_mapper(self, status):
@@ -35,32 +36,29 @@ class Ekart(BaseTrackService):
             return 'Exception'
 
     def __init__(self, waybill, *args, **kwargs):
-        super().__init__(waybill, 'delhivery', *args, **kwargs)
+        super().__init__(waybill, 'ekart', *args, **kwargs)
 
     '''
     This method will populate self.raw_data
     '''
     def _fetch(self):
-        self.raw_data = requests.get(
-            f'https://www.ekartlogistics.com/track/{self.waybill}'
-        ).text
+        self.raw_data = requests.post(
+            'https://ekartlogistics.com/ws/getTrackingDetails', json= {'trackingId': f'{self.waybill}'}
+        ).json()
         # print(self.raw_data)
 
     def _transform_checkpoint(self, scan):
-        status = get_elem_text(scan.find(attrs={"data-title": "Status"}))
-        date = get_elem_text(scan.find(attrs={"data-title": "Date"})) + ' , ' + get_elem_text(scan.find(attrs={"data-title": "Time"})) + '+5:30'
-        parsed_date = parse(date).isoformat()
-
         checkpoint = {
             "slug": self.provider,
-            "location": get_elem_text(scan.find(attrs={"data-title": "Place"})),
+            "city": scan.get('city'),
+            "location": scan.get('city'),
             "country_name": "India",
-            "message": status,
-            "submessage": status,
+            "message": scan.get('instructions'),
+            "submessage": scan.get('instructions'),
             "country_iso3": "IND",
-            "status": self.status_mapper(status),
-            "substatus": status,
-            "checkpoint_time": parsed_date,
+            "status": self.status_mapper(scan.get('statusDetails', '')),
+            "substatus": scan.get('statusDetails'),
+            "checkpoint_time": scan.get('date', ''),
             "state": None,
             "zip": None,
         }
@@ -72,23 +70,26 @@ class Ekart(BaseTrackService):
     '''
 
     def _transform(self):
-        soup = BeautifulSoup(self.raw_data, 'html.parser')
-        tables = soup.find_all('div', id='no-more-tables')
+        waybill_data = self.raw_data
+        sub_status= waybill_data['shipmentTrackingDetails'][-1].get('statusDetails')
 
-        status = get_elem_text(tables[0].find("td", attrs={"data-title": "Current Status"}))
         data = {
             'waybill': self.waybill,
             'provider': self.provider,
-            'status': self.status_mapper(status),
-            'substatus': status,
-            'estimated_date': get_elem_text(tables[0].find("td", attrs={"data-title": "Promised Delivery Date"})) or get_elem_text(tables[0].find("td", attrs={"data-title": "Delivered On"})),
-            'client': soup.find(text="Merchant name :").parent.next_sibling.strip(),
-            'receiverName': get_elem_text(tables[0].find("td", attrs={"data-title": "Received By"}))
+            'status': self.status_mapper(sub_status),
+            'substatus': sub_status,
+            'estimated_date': waybill_data.get('expectedDeliveryDate'),
+            'shipment_type': waybill_data.get('shipmentType'),
+            'destination': waybill_data.get('destinationCity'),
+            'client': waybill_data.get('merchantName'),
+            'receiver_name': waybill_data.get('receiverName'),
+            'receiver_relationship': waybill_data.get('receiverRelationShip')
         }
         checkpoints = []
-        for scan in tables[1].find_all('tr')[1:]:
+        for scan in waybill_data.get('shipmentTrackingDetails', [])[::-1]:
             checkpoints.append(self._transform_checkpoint(scan))
 
         data['checkpoints'] = checkpoints
 
         self.data = data
+        return data

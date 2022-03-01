@@ -1,8 +1,9 @@
 """Console script for libshipkore."""
 import sys
+import json
 import click
-from libshipkore.libshipkore import get_track_data, get_providers
-
+import libshipkore_base
+from pydantic.json import pydantic_encoder
 
 @click.group()
 def track_cli():
@@ -20,15 +21,15 @@ def providers_cli():
               help='Waybill or tracking number provided by provider.')
 def track(provider, waybill):
     """Console script for libshipkore."""
-    result = get_track_data(provider, waybill)
-    print(result)
+    result = libshipkore_base.get_track_data(provider, waybill)
+    print(json.dumps(result, indent=4, default=pydantic_encoder))
     return result
 
 
 @providers_cli.command()
 def providers():
     """Console script for libshipkore."""
-    result = get_providers()
+    result = libshipkore_base.get_providers()
     print(result)
     return result
 

@@ -1,7 +1,8 @@
-from .common.basetrackservice import BaseTrackService
+from ..common.basetrackservice import BaseTrackService, track_registry
 import requests
+from ..models.model import StatusChoice
 
-
+@track_registry.register('delhivery')
 class Delhivery(BaseTrackService):
     STATUS_MAPPER = {
         'WAITING_PICKUP': 'InfoReceived',
@@ -15,6 +16,8 @@ class Delhivery(BaseTrackService):
         'OUT_DELIVERY_SELLER': 'ReverseOutForDelivery',
         'PROD_REPLACED': 'ReverseInTransit',
         'REVERSAL_REACHED_SEL_CITY': 'ReverseInTransit',
+        'Manifested': 'InfoReceived',
+        'In Transit': 'InTransit',
     }
 
     def __init__(self, waybill, *args, **kwargs):
@@ -25,7 +28,7 @@ class Delhivery(BaseTrackService):
     '''
     def _fetch(self):
         self.raw_data = requests.get(
-            f'https://dlv-api.delhivery.com/v2/track?waybillId={self.waybill}'
+            f'https://dlv-web-api.delhivery.com/v3/track?wbn={self.waybill}'
         ).json()
         # print(self.raw_data)
 
@@ -33,13 +36,13 @@ class Delhivery(BaseTrackService):
         checkpoint = {
             "slug": self.provider,
             "city": scan.get('cityLocation'),
-            "location": scan.get('scannedLocation'),
+            "location": scan.get('cityLocation'),
             "country_name": "India",
-            "message": scan.get('instructions'),
-            "submessage": scan.get('instructions'),
+            "message": scan.get('scanNslRemark'),
+            "submessage": scan.get('scanNslRemark'),
             "country_iso3": "IND",
-            "status": Delhivery.STATUS_MAPPER.get(scan.get('status', '')),
-            "substatus": scan.get('status'),
+            "status": Delhivery.STATUS_MAPPER.get(scan.get('scan', '')) or StatusChoice.Exception.value,
+            "substatus": scan.get('scan'),
             "checkpoint_time": scan.get('scanDateTime', '') + '+05:30',
             "state": None,
             "zip": None,
@@ -58,17 +61,17 @@ class Delhivery(BaseTrackService):
             'provider': self.provider,
             'status': Delhivery.STATUS_MAPPER.get(waybill_data.get('status', {}).get('status', '')),
             'substatus': waybill_data.get('status', {}).get('status', ''),
-            'estimated_date': waybill_data.get('estimatedDate'),
+            'estimated_date': waybill_data.get('estimatedDate', '') + '+05:30',
             'reference_no': waybill_data.get('referenceNo'),
             'package_type': waybill_data.get('packageType'),
             'destination': waybill_data.get('destination'),
             'client': waybill_data.get('clientName'),
             'consignee_address': waybill_data.get('consigneeAddress'),
             'product': waybill_data.get('productName'),
-            'receiverName': '',
+            'receiver_name': '',
         }
         checkpoints = []
-        for scan in waybill_data.get('scans', []):
+        for scan in waybill_data.get('scans', [])[::-1]:
             checkpoints.append(self._transform_checkpoint(scan))
 
         data['checkpoints'] = checkpoints

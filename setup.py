@@ -10,7 +10,7 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ['Click>=7.0', 'beautifulsoup4>=4.9.3', 'python-dateutil>=2.8.1']
+requirements = ['Click>=8.0.3', 'beautifulsoup4>=4.10.0', 'python-dateutil>=2.8.2', 'requests>=2.27.1', 'pydantic>=1.9.0','parsel>=1.6.0']
 
 setup_requirements = ['pytest-runner', ]
 
@@ -19,14 +19,12 @@ test_requirements = ['pytest>=3', ]
 setup(
     author="Innerkore",
     author_email='admin@innerkore.com',
-    python_requires='>=3.5',
+    python_requires='>=3.7',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
