@@ -2,7 +2,7 @@
 import sys
 import json
 import click
-from . import libshipkore_base
+from libshipkore import libshipkore_base
 from pydantic.json import pydantic_encoder
 
 
