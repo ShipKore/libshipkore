@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "libshipkore"
-version = "0.4.1"
+version = "version = '0.4.2'"
 description = ""
 authors = ["Gagandeep Singh <gagan@innerkore.com>"]
 
