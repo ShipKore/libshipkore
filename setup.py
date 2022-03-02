@@ -56,6 +56,6 @@ setup(
     test_suite="tests",
     tests_require=test_requirements,
     url="https://github.com/shipkore/libshipkore",
-    version="version='0.4.2'",
+    version="0.4.2",
     zip_safe=False,
 )
