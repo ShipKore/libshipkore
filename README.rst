@@ -97,7 +97,7 @@ Supported Couriers
 and many many more `see here <https://github.com/ShipKore/libshipkore/tree/master/libshipkore/track/tracker>`_
 
 
-Sample Response
+Response Schema
 ---------------
 
 .. code-block:: json
