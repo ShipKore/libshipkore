@@ -1,10 +1,24 @@
+from .exceptions import CredentialsError
+
+
 class BaseService(object):
     def __init__(self, *args, **kwargs):
         # super().__init__(*args, **kwargs)
         self.raw_data = kwargs.get('raw_data')
         self.data = kwargs.get('data')
+        self.credentials = kwargs.get('credentials') or {}
         self.args = args
         self.kwargs = kwargs
+
+    '''
+    This method returns a required credential or raises CredentialsError
+    '''
+
+    def _credential(self, name):
+        value = self.credentials.get(name)
+        if not value:
+            raise CredentialsError(f"missing credential '{name}'")
+        return value
 
     '''
     This method will perform authorization for _fetch

@@ -1,0 +1,36 @@
+{
+  "_note": "Hand-written from the shapes in delhivery-express-api-doc.readme.io and the maintainers' recollection of the live API; NOT recorded from staging. Replace with recorded responses once credentials exist.",
+  "serviceability_ok": {
+    "delivery_codes": [
+      {"postal_code": {"pin": 110001, "pre_paid": "Y", "cod": "Y", "pickup": "Y", "repl": "N"}}
+    ]
+  },
+  "serviceability_prepaid_only": {
+    "delivery_codes": [
+      {"postal_code": {"pin": 999999, "pre_paid": "Y", "cod": "N", "pickup": "N"}}
+    ]
+  },
+  "serviceability_none": {"delivery_codes": []},
+  "rates": [{"total_amount": 85.5, "zone": "D"}],
+  "create_ok": {
+    "success": true,
+    "packages": [
+      {"waybill": "1234567890123", "status": "Success", "refnum": "ORD-1", "remarks": []}
+    ]
+  },
+  "create_duplicate": {
+    "success": false,
+    "rmk": "An internal Error has occurred",
+    "packages": [
+      {"waybill": "", "status": "Fail", "remarks": ["Order Id already exists"]}
+    ]
+  },
+  "cancel_ok": {"status": true, "order_id": "ORD-1"},
+  "cancel_rejected": {"status": false, "error": "Package cannot be cancelled in Delivered state"},
+  "pickup_ok": {"pickup_id": 987654, "incoming_center_name": "Delhi_Main_Hub"},
+  "pickup_fail": {"message": "Warehouse not found"},
+  "ndr_accepted": {"request_id": "UPL-0001"},
+  "ndr_no_id": {"message": "bad request"},
+  "ndr_status_pending": {"status": "Pending"},
+  "ndr_status_done": {"status": "Completed", "waybill": "1234567890123"}
+}
