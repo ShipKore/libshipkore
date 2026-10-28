@@ -88,6 +88,16 @@ class Shipment(BaseModel):
     remarks: List[str] = []
 
 
+class Label(BaseModel):
+    provider: str
+    waybill: str
+    url: Optional[str]
+    content: Optional[bytes]
+    content_type: str = "application/pdf"
+    # signed links lapse; download or regenerate before this many seconds
+    expires_in: Optional[int]
+
+
 class Cancellation(BaseModel):
     provider: str
     waybill: str

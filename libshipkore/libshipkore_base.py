@@ -3,6 +3,7 @@ import os
 import time
 from libshipkore.track import get_track_data  # noqa
 from libshipkore.track import get_providers  # noqa
+from libshipkore.provider import get_provider, list_providers  # noqa
 
 os.environ["TZ"] = "UTC"
 time.tzset()

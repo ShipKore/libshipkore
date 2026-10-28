@@ -2,15 +2,32 @@ import requests
 from class_registry import ClassRegistry
 from libshipkore.common.baseservice import BaseService
 from libshipkore.common.exceptions import ProviderError, UnsupportedOperation
+from libshipkore.track import get_track_data, track_registry
 
 carrier_registry = ClassRegistry()
+
+OPERATIONS = (
+    "track",
+    "serviceability",
+    "rates",
+    "create_shipment",
+    "label",
+    "cancel",
+    "schedule_pickup",
+    "ndr_action",
+    "ndr_status",
+)
 
 
 class BaseCarrier(BaseService):
     """
-    A provider client for the shipment lifecycle. Unlike the track services
-    there is no single run() pipeline: each operation is its own method, and
-    a carrier overrides only the ones its API offers.
+    The one interface every provider offers, whatever it can actually do.
+    A carrier overrides only the operations its API has; the rest raise
+    UnsupportedOperation, and `capabilities` reports the difference so
+    callers can check before calling.
+
+    Unlike the track services there is no single run() pipeline: each
+    operation is its own method.
     """
 
     provider = None
@@ -22,6 +39,18 @@ class BaseCarrier(BaseService):
         self.sandbox = sandbox
         self.session = session or requests.Session()
         self.timeout = timeout
+
+    @property
+    def capabilities(self):
+        """Names of the operations this provider supports."""
+        supported = {
+            op for op in OPERATIONS
+            if op != "track"
+            and getattr(type(self), op) is not getattr(BaseCarrier, op)
+        }
+        if self.provider in track_registry.keys():
+            supported.add("track")
+        return supported
 
     @property
     def root(self):
@@ -65,6 +94,12 @@ class BaseCarrier(BaseService):
     def _unsupported(self, operation):
         raise UnsupportedOperation(f"{self.provider}: {operation}")
 
+    def track(self, waybill):
+        """Tracking goes through the shared tracker registry."""
+        if self.provider not in track_registry.keys():
+            self._unsupported("track")
+        return get_track_data(self.provider, waybill)
+
     def serviceability(self, pincode, origin_pincode=None):
         """origin_pincode is for carriers that price or gate by lane."""
         self._unsupported("serviceability")
@@ -75,6 +110,14 @@ class BaseCarrier(BaseService):
 
     def create_shipment(self, request):
         self._unsupported("create_shipment")
+
+    def label(self, waybill, reference=None, size=None):
+        """
+        reference is the Shipment.reference from create_shipment, for
+        providers that key labels on their own id. size is "A4" or "4R"
+        where the provider lets the caller choose.
+        """
+        self._unsupported("label")
 
     def cancel(self, waybill):
         self._unsupported("cancel")
@@ -87,3 +130,11 @@ class BaseCarrier(BaseService):
 
     def ndr_status(self, request_id):
         self._unsupported("ndr_status")
+
+
+class TrackOnlyCarrier(BaseCarrier):
+    """A provider the library can only track, through the same interface."""
+
+    def __init__(self, provider, **kwargs):
+        super().__init__(**kwargs)
+        self.provider = provider

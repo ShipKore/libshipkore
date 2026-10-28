@@ -370,3 +370,28 @@ def test_ndr_status_unrecognised_state_stays_pending(carrier):
 def test_unimplemented_operation_is_unsupported():
     with pytest.raises(UnsupportedOperation):
         BaseCarrier().cancel("x")
+
+
+@responses.activate
+def test_label_returns_expiring_pdf_link(carrier):
+    responses.add(responses.GET, PROD + "/api/p/packing_slip",
+                  json=FIXTURES["label_ok"])
+    label = carrier.label("1234567890123", size="4R")
+    assert label.url.endswith("X-Amz-Expires=86400")
+    assert label.expires_in == 86400 and label.content_type == "application/pdf"
+    query = parse_qs(urlparse(responses.calls[0].request.url).query)
+    assert query["wbns"] == ["1234567890123"]
+    assert query["pdf"] == ["true"] and query["pdf_size"] == ["4R"]
+
+
+@responses.activate
+def test_label_missing_package(carrier):
+    responses.add(responses.GET, PROD + "/api/p/packing_slip",
+                  json=FIXTURES["label_none"])
+    with pytest.raises(ProviderError, match="no label"):
+        carrier.label("1234567890123")
+
+
+def test_label_rejects_unknown_size(carrier):
+    with pytest.raises(ValueError, match="A4"):
+        carrier.label("1", size="A5")

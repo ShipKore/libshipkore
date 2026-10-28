@@ -293,3 +293,29 @@ def test_pickup_needs_exactly_one_shipment(carrier, ids):
 def test_ndr_not_implemented_yet(carrier):
     with pytest.raises(UnsupportedOperation):
         carrier.ndr_action(NdrRequest(waybill="1", action=NdrAction.Reattempt))
+
+
+@responses.activate
+def test_label_uses_shipment_reference(carrier):
+    login()
+    responses.add(responses.POST, API + "/courier/generate/label",
+                  json=FIXTURES["label_ok"])
+    label = carrier.label("19041211125783", reference="15151515")
+    assert label.url.endswith("label-15151515.pdf")
+    assert json.loads(responses.calls[1].request.body) == {
+        "shipment_id": [15151515]
+    }
+
+
+@responses.activate
+def test_label_not_created(carrier):
+    login()
+    responses.add(responses.POST, API + "/courier/generate/label",
+                  json=FIXTURES["label_failed"])
+    with pytest.raises(ProviderError, match="no label"):
+        carrier.label("1", reference="15151515")
+
+
+def test_label_needs_the_reference(carrier):
+    with pytest.raises(ValueError, match="reference"):
+        carrier.label("19041211125783")

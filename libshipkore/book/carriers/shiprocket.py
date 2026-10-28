@@ -3,6 +3,7 @@ from ..base import BaseCarrier, carrier_registry
 from libshipkore.common.exceptions import ProviderError
 from ..models import (
     Cancellation,
+    Label,
     PaymentMode,
     Pickup,
     Rate,
@@ -205,6 +206,26 @@ class Shiprocket(BaseCarrier):
             status=created.get("status") or "NEW",
             reference=str(shipment_id),
         )
+
+    def label(self, waybill, reference=None, size=None):
+        """
+        Needs the Shiprocket shipment id as reference (Shipment.reference).
+        Label size is an account setting, so size is ignored.
+        """
+        if not reference:
+            raise ValueError("shiprocket labels need the shipment reference")
+        data = self._request(
+            "POST",
+            "/courier/generate/label",
+            json={"shipment_id": [int(reference)]},
+        )
+        # unverified: the response field name
+        url = data.get("label_url")
+        if not url:
+            raise ProviderError(
+                self.provider, f"no label for {waybill}", body=data
+            )
+        return Label(provider=self.provider, waybill=waybill, url=url)
 
     def cancel(self, waybill):
         """Bulk and asynchronous: only accepted, not yet done."""

@@ -45,6 +45,31 @@ As Library
 `get_track_data` provides tracking utility to track package in supported Couriers.
 `get_providers` provides list of all the supported logistics providers.
 
+One interface for every provider
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Every provider, whether it can only track or can also book, is reached the same way.
+Each one supports a subset of these operations: `track`, `serviceability`, `rates`,
+`create_shipment`, `label`, `cancel`, `schedule_pickup`, `ndr_action` and `ndr_status`.
+Ask `capabilities` before calling; an operation a provider lacks raises `UnsupportedOperation`.
+
+.. code-block:: python
+
+   from libshipkore.provider import get_provider, list_providers
+   from libshipkore.book.models import Address, Parcel, ShipmentRequest
+
+   list_providers()     # {"delhivery": ["cancel", "label", ...], "dtdc": ["track"], ...}
+
+   delhivery = get_provider("delhivery", credentials={"api_token": "..."}, sandbox=True)
+   delhivery.capabilities
+   delhivery.serviceability("560001")
+   shipment = delhivery.create_shipment(ShipmentRequest(...))
+   delhivery.label(shipment.waybill, shipment.reference, size="4R")
+   delhivery.track(shipment.waybill)
+
+Booking is implemented for Delhivery and Shiprocket so far, and neither has been
+exercised against a live API yet. See `docs/provider-capability-matrix.md`.
+
 
 As Code (like cloning this Repo)
 -----------

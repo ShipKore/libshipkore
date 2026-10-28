@@ -65,5 +65,12 @@
     "success_wbns": [{"waybill": "1234567890123", "action": "RE-ATTEMPT"}],
     "request_id": "UPL17749083484755923441"
   },
-  "ndr_status_unknown": {"status": "In Progress", "request_id": "UPL17749083484755923441"}
+  "ndr_status_unknown": {"status": "In Progress", "request_id": "UPL17749083484755923441"},
+  "label_ok": {
+    "packages": [
+      {"wbn": "1234567890123", "pdf_download_link": "https://express-hq.s3.ap-south-1.amazonaws.com/packing-slip/1234567890123.pdf?X-Amz-Expires=86400", "pdf_encoding": "Jdufhbsefhbegr"}
+    ],
+    "packages_found": 1
+  },
+  "label_none": {"packages": [], "packages_found": 0}
 }

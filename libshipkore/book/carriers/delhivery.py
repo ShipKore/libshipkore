@@ -4,6 +4,7 @@ from ..base import BaseCarrier, carrier_registry
 from libshipkore.common.exceptions import ProviderError
 from ..models import (
     Cancellation,
+    Label,
     NdrAction,
     NdrResult,
     Pickup,
@@ -151,6 +152,28 @@ class Delhivery(BaseCarrier):
             order_id=request.order_id,
             status=package["status"],
             remarks=remarks,
+        )
+
+    def label(self, waybill, reference=None, size=None):
+        """
+        A signed PDF link from the packing-slip API. It lapses after 24
+        hours, so download it or ask again. size is "A4" (the default) or
+        "4R" for label printers.
+        """
+        if size not in (None, "A4", "4R"):
+            raise ValueError("delhivery label size must be 'A4' or '4R'")
+        params = {"wbns": waybill, "pdf": "true"}
+        if size:
+            params["pdf_size"] = size
+        data = self._request("GET", "/api/p/packing_slip", params=params)
+        packages = data.get("packages") or []
+        link = packages[0].get("pdf_download_link") if packages else None
+        if not link:
+            raise ProviderError(
+                self.provider, f"no label for {waybill}", body=data
+            )
+        return Label(
+            provider=self.provider, waybill=waybill, url=link, expires_in=86400
         )
 
     def cancel(self, waybill):

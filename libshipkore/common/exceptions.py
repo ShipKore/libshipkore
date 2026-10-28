@@ -6,6 +6,10 @@ class CredentialsError(ShipkoreError):
     """A required credential was not supplied."""
 
 
+class UnknownProvider(ShipkoreError):
+    """No tracker or carrier is registered under this name."""
+
+
 class UnsupportedOperation(ShipkoreError):
     """The provider does not offer this operation."""
 

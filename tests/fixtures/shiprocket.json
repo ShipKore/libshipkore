@@ -32,5 +32,7 @@
     }
   },
   "pickup_failed": {"pickup_status": 0, "response": {"data": "Already in Pickup Scheduled state"}},
-  "cancel_ok": {"message": "Bulk Shipment cancellation is in progress. Please wait for some time."}
+  "cancel_ok": {"message": "Bulk Shipment cancellation is in progress. Please wait for some time."},
+  "label_ok": {"label_created": 1, "label_url": "https://kr-shipmultichannel.s3.amazonaws.com/label-15151515.pdf", "not_created": []},
+  "label_failed": {"label_created": 0, "label_url": "", "not_created": [{"shipment_id": 15151515, "message": "AWB not assigned"}]}
 }

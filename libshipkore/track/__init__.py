@@ -2,7 +2,7 @@ from .common.basetrackservice import track_registry
 from .tracker import apc  # noqa: F401
 
 ALTERNATIVE_PROVIDERS = {
-    "globegistics": "asendia",
+    "globegistics": "asendia-usa",
 }
 
 
