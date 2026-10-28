@@ -94,7 +94,8 @@ async def test_the_tools_are_documented_and_annotated(client):
     for name, tool in tools.items():
         assert tool.title and tool.description, name
         assert tool.annotations is not None, name
-        assert not tool.annotations.destructive_hint, name
+    destructive = {n for n, t in tools.items() if t.annotations.destructive_hint}
+    assert destructive == {"cancel_order", "save_product", "delete_product"}
     for name in LOOKUP_TOOLS:
         assert tools[name].annotations.read_only_hint is True, name
     # it records the delivery status on the order, so it must not claim read-only

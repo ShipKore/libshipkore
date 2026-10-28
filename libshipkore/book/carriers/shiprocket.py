@@ -75,6 +75,29 @@ class Shiprocket(BaseCarrier):
         self._token = None
         return super()._request(method, path, **kwargs)
 
+    def validate(self, operation, request, **options):
+        if operation == "create_shipment":
+            unknown = sorted(set(options) - {"courier_id"})
+            if unknown:
+                raise ValueError(
+                    f"shiprocket accepts only the provider option courier_id, got {unknown}"
+                )
+            consignee = request.consignee
+            missing = [
+                name for name, value in (
+                    ("consignee.email", consignee.email),
+                    ("consignee.city", consignee.city),
+                    ("consignee.state", consignee.state),
+                    ("parcel.length_cm", request.parcel.length_cm),
+                    ("parcel.breadth_cm", request.parcel.breadth_cm),
+                    ("parcel.height_cm", request.parcel.height_cm),
+                ) if value is None
+            ]
+            if missing:
+                raise ValueError(f"shiprocket requires {', '.join(missing)}")
+        if operation == "schedule_pickup" and len(request.shipment_ids) != 1:
+            raise ValueError("shiprocket schedules one shipment per pickup")
+
     def _couriers(self, origin, destination, weight_kg, cod):
         # unverified: response shape of the serviceability endpoint
         data = self._request(
@@ -135,19 +158,8 @@ class Shiprocket(BaseCarrier):
         Shiprocket picks the courier. The returned reference is the
         Shiprocket shipment id that schedule_pickup needs.
         """
+        self.validate("create_shipment", request)
         consignee = request.consignee
-        missing = [
-            name for name, value in (
-                ("consignee.email", consignee.email),
-                ("consignee.city", consignee.city),
-                ("consignee.state", consignee.state),
-                ("parcel.length_cm", request.parcel.length_cm),
-                ("parcel.breadth_cm", request.parcel.breadth_cm),
-                ("parcel.height_cm", request.parcel.height_cm),
-            ) if value is None
-        ]
-        if missing:
-            raise ValueError(f"shiprocket requires {', '.join(missing)}")
         total = request.declared_value
         order = {
             "order_id": request.order_id,
@@ -243,8 +255,7 @@ class Shiprocket(BaseCarrier):
 
     def schedule_pickup(self, request):
         """Pickups are per shipment, one shipment id at a time."""
-        if len(request.shipment_ids) != 1:
-            raise ValueError("shiprocket schedules one shipment per pickup")
+        self.validate("schedule_pickup", request)
         shipment_id = request.shipment_ids[0]
         body = {
             "shipment_id": [int(shipment_id)],

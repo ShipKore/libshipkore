@@ -18,6 +18,15 @@ def parse_args(argv=None):
              "Defaults to $LIBSHIPKORE_CONFIG; with neither, the server runs with "
              "in-memory storage and no credentials.",
     )
+    parser.add_argument(
+        "--no-elicit", action="store_true",
+        help="Do not ask the user directly to approve a write when the client "
+             "supports it; the preview-and-token step still applies.",
+    )
+    parser.add_argument(
+        "--confirm-ttl", type=int, default=600, metavar="SECONDS",
+        help="How long a confirmation token stays valid (default 600).",
+    )
     return parser.parse_args(argv)
 
 
@@ -34,8 +43,10 @@ def main(argv=None):
         )
     try:
         from libshipkore.client import Shipkore
-        server = build_server(Shipkore.from_config(load_config(args.config)),
-                              close_kore=True)
+        server = build_server(
+            Shipkore.from_config(load_config(args.config)), close_kore=True,
+            elicit=not args.no_elicit, confirm_ttl=args.confirm_ttl,
+        )
     except (ConfigError, ShipkoreError) as error:
         sys.exit(f"libshipkore-mcp: {error}")
     server.run()

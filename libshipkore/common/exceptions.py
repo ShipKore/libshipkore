@@ -6,6 +6,10 @@ class CredentialsError(ShipkoreError):
     """A required credential was not supplied."""
 
 
+class ConfirmationError(ShipkoreError):
+    """A confirmation token is missing, unknown, expired, used, or for other arguments."""
+
+
 class ConfigError(ShipkoreError):
     """The configuration file or its environment variables are invalid."""
 

@@ -182,6 +182,7 @@ class OrderItem(Model):
 
 
 class OrderStatus(str, enum.Enum):
+    Draft = "Draft"
     Failed = "Failed"
     Booked = "Booked"
     CancelPending = "CancelPending"

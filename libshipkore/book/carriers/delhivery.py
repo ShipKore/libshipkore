@@ -43,6 +43,18 @@ class Delhivery(BaseCarrier):
         token = self._credential("api_token")
         return {"Authorization": f"Token {token}", "Accept": "application/json"}
 
+    def validate(self, operation, request, **options):
+        if operation == "create_shipment" and options:
+            raise ValueError(f"delhivery takes no provider options, got {sorted(options)}")
+        if operation == "schedule_pickup" and not (
+            request.warehouse and request.pickup_time and request.package_count
+        ):
+            raise ValueError(
+                "delhivery pickups need warehouse, pickup_time and package_count"
+            )
+        if operation == "ndr_action" and request.action not in self.NDR_ACTIONS:
+            self._unsupported(f"ndr_action {request.action.value}")
+
     def serviceability(self, pincode, origin_pincode=None):
         data = self._request(
             "GET", "/c/api/pin-codes/json/", params={"filter_codes": pincode}
@@ -210,11 +222,7 @@ class Delhivery(BaseCarrier):
         Pickups are per warehouse, not per waybill, and one request per
         warehouse per day can be active at a time.
         """
-        if not (request.warehouse and request.pickup_time
-                and request.package_count):
-            raise ValueError(
-                "delhivery pickups need warehouse, pickup_time and package_count"
-            )
+        self.validate("schedule_pickup", request)
         data = self._request(
             "POST",
             "/fm/request/new/",
@@ -249,9 +257,8 @@ class Delhivery(BaseCarrier):
         ndr_status. RE-ATTEMPT needs a Pending package at one of a few
         NSL codes and works best after 9 PM once dispatches are closed.
         """
-        act = self.NDR_ACTIONS.get(request.action)
-        if act is None:
-            self._unsupported(f"ndr_action {request.action.value}")
+        self.validate("ndr_action", request)
+        act = self.NDR_ACTIONS[request.action]
         data = self._request(
             "POST",
             "/api/p/update",

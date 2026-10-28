@@ -495,3 +495,59 @@ def test_stateless_lookups_pass_through(kore):
                   json=DLV["rates"])
     rates = kore.rates("delhivery", "110001", "560001", Parcel(weight_kg=1))
     assert rates[0].amount == 85.5
+
+
+# previews: what a booking would do, without doing it --------------------
+
+def test_a_preview_touches_neither_the_provider_nor_storage(kore):
+    with responses.RequestsMock():  # no routes registered: any HTTP call raises
+        order = kore.preview_order(
+            "delhivery", "ORD-1", consignee(), "Main WH", items=[{"sku": "TEE", "quantity": 2}])
+    assert order.status == OrderStatus.Draft and order.declared_value == 998
+    assert order.description == "T-shirt x2" and order.waybill is None
+    assert kore.list_orders() == [] and kore.responses() == []
+
+
+def test_a_preview_applies_the_providers_own_requirements(kore):
+    missing = consignee()
+    missing.email = None
+    with pytest.raises(ValueError, match="consignee.email.*parcel.length_cm"):
+        kore.preview_order("shiprocket", "SR-1", missing, "Primary",
+                           parcel=Parcel(weight_kg=1))
+    with pytest.raises(ValueError, match="only the provider option courier_id"):
+        kore.preview_order("shiprocket", "SR-1", consignee(), "Primary",
+                           parcel=Parcel(weight_kg=1, length_cm=1, breadth_cm=1, height_cm=1),
+                           surprise=1)
+
+
+@responses.activate
+def test_a_preview_refuses_what_booking_would_refuse(kore):
+    mock_create()
+    book(kore)
+    with pytest.raises(DuplicateOrder):
+        kore.preview_order("delhivery", "ORD-1", consignee(), "Main WH",
+                           items=[{"sku": "TEE"}])
+
+
+@responses.activate
+def test_pickups_and_ndr_actions_need_a_booked_order(kore):
+    mock_create()
+    book(kore)
+    responses.add(responses.POST, DELHIVERY + "/api/p/edit", json=DLV["cancel_ok"])
+    kore.cancel_order("ORD-1")
+    with pytest.raises(ValueError, match="Cancelled, not booked"):
+        kore.preview_pickup("ORD-1", date(2026, 11, 2), time(10, 0))
+    with pytest.raises(ValueError, match="Cancelled, not booked"):
+        kore.preview_ndr_action("ORD-1", NdrAction.Reattempt)
+
+
+@responses.activate
+def test_a_pickup_preview_applies_the_providers_requirements(kore):
+    mock_create()
+    book(kore)
+    with pytest.raises(ValueError, match="pickup_time"):
+        kore.preview_pickup("ORD-1", date(2026, 11, 2))
+    order, request = kore.preview_pickup("ORD-1", date(2026, 11, 2), time(10, 0))
+    assert request.warehouse == "Main WH" and order.status == OrderStatus.Booked
+    with pytest.raises(UnsupportedOperation):
+        kore.preview_ndr_action("ORD-1", NdrAction.Defer)

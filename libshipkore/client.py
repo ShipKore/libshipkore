@@ -233,18 +233,10 @@ class Shipkore:
         return [Order(**d) for d in
                 self.storage.list("orders", filters, limit, offset)]
 
-    def create_order(self, provider, order_id, consignee, pickup_location,
-                     items=None, parcel=None, payment_mode=PaymentMode.Prepaid,
-                     cod_amount=0, declared_value=None, description=None,
-                     invoice_number=None, **options):
-        """
-        Book an order with the provider and store it. Items refer to
-        catalog products by sku; their prices, weights and names fill in
-        the declared value, parcel weight and description unless given.
-        Extra options go to the provider (e.g. courier_id for Shiprocket).
-        A failed booking is stored with status Failed and the error, and
-        can be retried under the same order id; a booked one cannot.
-        """
+    def _prepare_order(self, provider, order_id, consignee, pickup_location,
+                       items, parcel, payment_mode, cod_amount, declared_value,
+                       description, invoice_number, options):
+        """Everything create_order does before contacting the provider."""
         existing = self._load_order(order_id)
         if existing and existing.status != OrderStatus.Failed:
             raise DuplicateOrder(f"order '{order_id}' is already {existing.status.value}")
@@ -266,7 +258,7 @@ class Shipkore:
         order = Order(
             order_id=order_id,
             provider=carrier.provider,
-            status=OrderStatus.Failed,
+            status=OrderStatus.Draft,
             consignee=consignee,
             pickup_location=pickup_location,
             parcel=parcel,
@@ -291,6 +283,42 @@ class Shipkore:
             quantity=sum(i.quantity for i in items) or 1,
             invoice_number=invoice_number,
         )
+        carrier.validate("create_shipment", request, **options)
+        return order, request, carrier
+
+    def preview_order(self, provider, order_id, consignee, pickup_location,
+                      items=None, parcel=None, payment_mode=PaymentMode.Prepaid,
+                      cod_amount=0, declared_value=None, description=None,
+                      invoice_number=None, **options):
+        """
+        The order create_order would book, with status Draft, after the same
+        checks (duplicate id, catalog lookups, the provider's required
+        fields). Contacts no provider and stores nothing.
+        """
+        return self._prepare_order(
+            provider, order_id, consignee, pickup_location, items, parcel,
+            payment_mode, cod_amount, declared_value, description,
+            invoice_number, options,
+        )[0]
+
+    def create_order(self, provider, order_id, consignee, pickup_location,
+                     items=None, parcel=None, payment_mode=PaymentMode.Prepaid,
+                     cod_amount=0, declared_value=None, description=None,
+                     invoice_number=None, **options):
+        """
+        Book an order with the provider and store it. Items refer to
+        catalog products by sku; their prices, weights and names fill in
+        the declared value, parcel weight and description unless given.
+        Extra options go to the provider (e.g. courier_id for Shiprocket).
+        A failed booking is stored with status Failed and the error, and
+        can be retried under the same order id; a booked one cannot.
+        """
+        order, request, carrier = self._prepare_order(
+            provider, order_id, consignee, pickup_location, items, parcel,
+            payment_mode, cod_amount, declared_value, description,
+            invoice_number, options,
+        )
+        order.status = OrderStatus.Failed
         try:
             with self._operation("create_shipment", order_id):
                 shipment = carrier.create_shipment(request, **options)
@@ -303,15 +331,23 @@ class Shipkore:
         order.reference = shipment.reference
         return self._save_order(order)
 
+    def _open_order(self, order_id, allowed=(OrderStatus.Booked,)):
+        order = self.get_order(order_id)
+        if order.status not in allowed:
+            raise ValueError(f"order '{order_id}' is {order.status.value}, not booked")
+        return order
+
+    def preview_cancel(self, order_id):
+        """The order cancel_order would cancel, after checking it can be."""
+        return self._open_order(order_id, (OrderStatus.Booked, OrderStatus.CancelPending))
+
     def cancel_order(self, order_id):
         """
         Ask the provider to cancel. Providers that finish asynchronously
         leave the order CancelPending. A refusal is stored on the order
         and raised.
         """
-        order = self.get_order(order_id)
-        if order.status not in (OrderStatus.Booked, OrderStatus.CancelPending):
-            raise ValueError(f"order '{order_id}' is {order.status.value}, not booked")
+        order = self.preview_cancel(order_id)
         with self._operation("cancel", order_id):
             result = self.provider(order.provider).cancel(order.waybill)
         if result.status == RequestStatus.Failed:
@@ -330,8 +366,9 @@ class Shipkore:
         self._save_order(order)
         return track
 
-    def schedule_pickup(self, order_id, pickup_date, pickup_time=None):
-        order = self.get_order(order_id)
+    def preview_pickup(self, order_id, pickup_date, pickup_time=None):
+        """The order and the pickup request schedule_pickup would send, validated."""
+        order = self._open_order(order_id)
         request = PickupRequest(
             pickup_date=pickup_date,
             warehouse=order.pickup_location,
@@ -339,14 +376,25 @@ class Shipkore:
             package_count=1,
             shipment_ids=[order.reference] if order.reference else [],
         )
+        self.provider(order.provider).validate("schedule_pickup", request)
+        return order, request
+
+    def schedule_pickup(self, order_id, pickup_date, pickup_time=None):
+        order, request = self.preview_pickup(order_id, pickup_date, pickup_time)
         with self._operation("schedule_pickup", order_id):
             order.pickup = self.provider(order.provider).schedule_pickup(request)
         self._save_order(order)
         return order.pickup
 
-    def ndr_action(self, order_id, action, **fields):
-        order = self.get_order(order_id)
+    def preview_ndr_action(self, order_id, action, **fields):
+        """The order and NDR request ndr_action would send, validated."""
+        order = self._open_order(order_id)
         request = NdrRequest(waybill=order.waybill, action=action, **fields)
+        self.provider(order.provider).validate("ndr_action", request)
+        return order, request
+
+    def ndr_action(self, order_id, action, **fields):
+        order, request = self.preview_ndr_action(order_id, action, **fields)
         with self._operation("ndr_action", order_id):
             result = self.provider(order.provider).ndr_action(request)
         order.ndr.append(result)

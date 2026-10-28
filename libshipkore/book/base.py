@@ -108,6 +108,15 @@ class BaseCarrier(BaseService):
         except Exception:
             logger.exception("response recorder failed")
 
+    def validate(self, operation, request, **options):
+        """
+        Raise ValueError (or UnsupportedOperation) if this request would be
+        refused before any API call, e.g. a field the provider requires is
+        missing. Operations call it first, and previews call it alone, so a
+        preview can promise what a booking will not trip over. Nothing here
+        may contact the provider.
+        """
+
     def _unsupported(self, operation):
         raise UnsupportedOperation(f"{self.provider}: {operation}")
 
