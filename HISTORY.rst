@@ -14,6 +14,10 @@ Breaking:
 
 Added:
 
+* A carrier directory (``libshipkore carriers``, MCP ``search_carriers``), tracking without naming the
+  provider when the number format identifies the carrier, and trackers described as JSON specs
+  (``libshipkore/track/specs/``). No spec ships yet; Xpressbees is listed as not built (captcha).
+
 * iThink Logistics tracking (``ithink``, needs ``access_token`` and ``secret_key``) and Shiprocket
   tracking by AWB. Shiprocket's response shape is unverified.
 

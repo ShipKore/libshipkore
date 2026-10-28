@@ -113,7 +113,7 @@ def test_the_cli_commands_in_the_readme_are_the_ones_that_exist(readme):
     for line in re.findall(r"^   libshipkore (.*)$", cli_section, re.M):
         words = line.split()
         command = next(w for w in words if w in cli.main.commands)
-        accepted = {opt for param in cli.main.commands[command].params for opt in param.opts}
+        accepted = {opt for param in cli.main.commands[command].params for opt in param.opts + param.secondary_opts}
         used = {w for w in words if w.startswith("--") and w != "--config"}
         assert used <= accepted, f"{command}: README uses {used - accepted}"
     assert "--refresh" in cli_section and "LIBSHIPKORE_CONFIG" in cli_section

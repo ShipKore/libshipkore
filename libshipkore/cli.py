@@ -18,6 +18,7 @@ from libshipkore.common.exceptions import ShipkoreError
 from libshipkore.common.serialization import to_jsonable
 from libshipkore.mcp_server.config import load_config  # needs no MCP SDK
 from libshipkore.provider import list_providers
+from libshipkore.track.detect import search_carriers
 
 
 def show(value):
@@ -72,7 +73,7 @@ def providers(ctx):
 
 
 @main.command()
-@click.option("--provider", prompt="Provider", help="Courier, e.g. delhivery. See: providers")
+@click.option("--provider", help="Courier, e.g. delhivery. See: carriers. Omit to guess from the number.")
 @click.option("--waybill", prompt="Waybill", help="Waybill or tracking number provided by the courier.")
 @click.option("--refresh", is_flag=True, help="Ask the courier again instead of using a recent stored result.")
 @click.pass_context
@@ -92,6 +93,15 @@ def track(ctx, provider, waybill, refresh):
             f"{provider}'s tracking page or API returned something unexpected "
             f"({type(error).__name__}: {error}); it may have changed")
     show(result)
+
+
+@main.command()
+@click.argument("query", required=False)
+@click.option("--country", help="Two-letter country code, e.g. IN.")
+@click.option("--supported/--unsupported", default=None, help="Only carriers whose tracking is (or is not) built.")
+def carriers(query, country, supported):
+    """Search the carrier directory by name or slug."""
+    show(search_carriers(query, country, supported, limit=1000))
 
 
 @main.command()

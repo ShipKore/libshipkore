@@ -1,5 +1,8 @@
 from .common.basetrackservice import track_registry
 from .tracker import apc  # noqa: F401
+from .declarative import load_specs
+
+load_specs()
 
 ALTERNATIVE_PROVIDERS = {
     "globegistics": "asendia-usa",

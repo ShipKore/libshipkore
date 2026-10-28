@@ -1,6 +1,6 @@
 from datetime import date, time
 from importlib.resources import files
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Optional
 
 from mcp.server.mcpserver import Context
 from mcp.server.mcpserver.exceptions import ResourceError
@@ -26,6 +26,7 @@ from libshipkore.book.models import (
 from libshipkore.common.exceptions import NotFound
 from libshipkore.common.models import Model
 from libshipkore.provider import list_providers as provider_capabilities
+from libshipkore.track.detect import search_carriers as _search_carriers
 from libshipkore.track.models.model import Track
 
 from .confirm import Described, Preview, two_step
@@ -191,8 +192,12 @@ def register_read_tools(mcp, kore):
 
     @mcp.tool(title="Track a shipment", annotations=LOOKUP)
     async def track_shipment(
-        provider: Provider,
         waybill: Annotated[str, Field(description="Waybill / tracking number.")],
+        provider: Annotated[
+            Optional[str],
+            Field(description="Carrier slug (see search_carriers). Omit to guess "
+                              "from the number's format; unrecognised formats need it."),
+        ] = None,
         refresh: Annotated[
             bool, Field(description="Skip the stored result and ask the provider again.")
         ] = False,
@@ -204,6 +209,20 @@ def register_read_tools(mcp, kore):
         served from storage; delivered shipments are never re-fetched.
         """
         return await run_blocking(kore.track, waybill, provider, refresh, scraper=True)
+
+    @mcp.tool(title="Search carriers", annotations=LOOKUP)
+    async def search_carriers(
+        query: Annotated[Optional[str], Field(description="Part of a carrier's slug or name.")] = None,
+        country: Annotated[Optional[str], Field(description="Two-letter country code, e.g. IN.")] = None,
+        supported: Annotated[
+            Optional[bool], Field(description="True: tracking works. False: known but not built.")
+        ] = None,
+    ) -> list[dict]:
+        """
+        Carriers the library knows, with whether tracking is built and, for the
+        rest, why not. Use the slug as `provider` in track_shipment.
+        """
+        return await run_blocking(_search_carriers, query, country, supported)
 
     @mcp.tool(title="Track an order", annotations=REFRESH)
     async def track_order(

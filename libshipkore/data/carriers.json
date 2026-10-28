@@ -1,0 +1,260 @@
+[
+  {
+    "slug": "abffreight",
+    "name": "ABF Freight",
+    "country": "US",
+    "supported": true
+  },
+  {
+    "slug": "apc",
+    "name": "APC Postal Logistics",
+    "country": null,
+    "supported": true
+  },
+  {
+    "slug": "asendia-usa",
+    "name": "Asendia USA",
+    "country": "US",
+    "supported": true
+  },
+  {
+    "slug": "bluedart",
+    "name": "Blue Dart",
+    "country": "IN",
+    "supported": true
+  },
+  {
+    "slug": "delhivery",
+    "name": "Delhivery",
+    "country": "IN",
+    "supported": true
+  },
+  {
+    "slug": "dhl",
+    "name": "DHL Express",
+    "country": "DE",
+    "supported": false,
+    "note": "official tracking needs an API key; not built"
+  },
+  {
+    "slug": "dtdc",
+    "name": "DTDC",
+    "country": "IN",
+    "supported": true
+  },
+  {
+    "slug": "ecom-express",
+    "name": "Ecom Express",
+    "country": "IN",
+    "supported": true
+  },
+  {
+    "slug": "ekart",
+    "name": "Ekart Logistics",
+    "country": "IN",
+    "supported": true
+  },
+  {
+    "slug": "epostglobal",
+    "name": "ePost Global",
+    "country": null,
+    "supported": true
+  },
+  {
+    "slug": "fedex",
+    "name": "FedEx",
+    "country": "US",
+    "supported": true,
+    "waybill_pattern": "^(\\d{12}|\\d{15})$"
+  },
+  {
+    "slug": "first-flight",
+    "name": "First Flight Couriers",
+    "country": "IN",
+    "supported": true
+  },
+  {
+    "slug": "firstmile",
+    "name": "FirstMile",
+    "country": "US",
+    "supported": true
+  },
+  {
+    "slug": "gati-kwe",
+    "name": "Gati-KWE",
+    "country": "IN",
+    "supported": true
+  },
+  {
+    "slug": "gls-us",
+    "name": "GLS US",
+    "country": "US",
+    "supported": true
+  },
+  {
+    "slug": "i-parcel",
+    "name": "i-parcel",
+    "country": null,
+    "supported": true
+  },
+  {
+    "slug": "lasership",
+    "name": "LaserShip",
+    "country": "US",
+    "supported": true
+  },
+  {
+    "slug": "lexship",
+    "name": "LexShip",
+    "country": null,
+    "supported": true
+  },
+  {
+    "slug": "ocs",
+    "name": "OCS",
+    "country": null,
+    "supported": true
+  },
+  {
+    "slug": "olddominion-freightline",
+    "name": "Old Dominion Freight Line",
+    "country": "US",
+    "supported": true
+  },
+  {
+    "slug": "osm-worldwide",
+    "name": "OSM Worldwide",
+    "country": "US",
+    "supported": true
+  },
+  {
+    "slug": "pickrr",
+    "name": "Pickrr",
+    "country": "IN",
+    "supported": true
+  },
+  {
+    "slug": "pilotfrieght",
+    "name": "Pilot Freight Services",
+    "country": "US",
+    "supported": true
+  },
+  {
+    "slug": "pitney-bowes",
+    "name": "Pitney Bowes",
+    "country": "US",
+    "supported": true
+  },
+  {
+    "slug": "professional-couriers",
+    "name": "Professional Couriers",
+    "country": "IN",
+    "supported": true
+  },
+  {
+    "slug": "rl-carriers",
+    "name": "R+L Carriers",
+    "country": "US",
+    "supported": true
+  },
+  {
+    "slug": "safexpress",
+    "name": "Safexpress",
+    "country": "IN",
+    "supported": true
+  },
+  {
+    "slug": "saia-freight",
+    "name": "Saia",
+    "country": "US",
+    "supported": true
+  },
+  {
+    "slug": "shreeanjanicourier",
+    "name": "Shree Anjani Courier",
+    "country": "IN",
+    "supported": true
+  },
+  {
+    "slug": "shreenandancourier",
+    "name": "Shree Nandan Courier",
+    "country": "IN",
+    "supported": true
+  },
+  {
+    "slug": "shreetirupati",
+    "name": "Shree Tirupati Courier",
+    "country": "IN",
+    "supported": true
+  },
+  {
+    "slug": "shyplite",
+    "name": "Shyplite",
+    "country": "IN",
+    "supported": true
+  },
+  {
+    "slug": "southeasternfreightlines",
+    "name": "Southeastern Freight Lines",
+    "country": "US",
+    "supported": true
+  },
+  {
+    "slug": "spee-dee",
+    "name": "Spee-Dee Delivery",
+    "country": "US",
+    "supported": true
+  },
+  {
+    "slug": "spoton",
+    "name": "SpotOn Logistics",
+    "country": "IN",
+    "supported": true
+  },
+  {
+    "slug": "tforcefinalmile",
+    "name": "TForce Final Mile",
+    "country": "US",
+    "supported": true
+  },
+  {
+    "slug": "trackon",
+    "name": "Trackon Couriers",
+    "country": "IN",
+    "supported": true
+  },
+  {
+    "slug": "ups",
+    "name": "UPS",
+    "country": "US",
+    "supported": false,
+    "waybill_pattern": "^1Z[0-9A-Z]{16}$",
+    "note": "official tracking needs an API key; not built"
+  },
+  {
+    "slug": "usps",
+    "name": "USPS",
+    "country": "US",
+    "supported": false,
+    "note": "official tracking needs an API key; not built"
+  },
+  {
+    "slug": "xpressbees",
+    "name": "Xpressbees",
+    "country": "IN",
+    "supported": false,
+    "note": "the public tracking page asks for a captcha; not built (no bypass), use the booking API once docs are available"
+  },
+  {
+    "slug": "yrc",
+    "name": "YRC Freight",
+    "country": "US",
+    "supported": true
+  },
+  {
+    "slug": "zinc",
+    "name": "Zinc",
+    "country": null,
+    "supported": true
+  }
+]

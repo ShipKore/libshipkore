@@ -16,6 +16,9 @@ Prefer the courier's own tracking API over scraping its HTML. Look at what its p
 
 ## 2. Write the tracker
 
+**If the courier's endpoint returns plain JSON, write a spec, not a module.** Add `libshipkore/track/specs/<slug>.json` (format and an example in the docstring of `libshipkore/track/declarative.py`): URL, the path to the scans, which fields are time, message and location, and a map from the courier's status words to `StatusChoice`. It must say `source` and either `verified_on` (a real call you made) or `unverified: true`, or loading it fails. Also add the courier to `libshipkore/data/carriers.json` only if you have a fact to record (a `waybill_pattern` only when the number format is well known; a courier you cannot support gets `supported: false` and a `note` saying why, for example a captcha, which is never bypassed). Test it like a tracker (step 3). Use a Python module only when the courier needs HTML parsing, a token, or logic.
+
+
 Create `libshipkore/track/tracker/<module>.py`; every module in that folder is imported automatically. Use `libshipkore/track/common/basetrackservice.py` for the base class.
 
 ```python

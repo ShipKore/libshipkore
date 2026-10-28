@@ -36,8 +36,16 @@ Every provider and the operations it supports, as JSON.
 
    libshipkore track --provider delhivery --waybill 1234567890123
 
-Where a shipment is, as JSON, with its checkpoints. Without `--provider` and `--waybill` it asks for
-them. Add `--refresh` to ask the courier again instead of using a recent stored result.
+Where a shipment is, as JSON, with its checkpoints. Without `--waybill` it asks for it. Without
+`--provider` it tries the carriers whose number format fits (few formats are distinctive enough, so name
+the provider when you know it). Add `--refresh` to ask the courier again instead of using a recent stored result.
+
+.. code-block:: bash
+
+   libshipkore carriers delhivery
+   libshipkore carriers --country IN --unsupported
+
+Search the carrier directory: which carriers tracking is built for, and for the rest why not.
 
 The other commands look things up and change nothing at a provider:
 
@@ -182,7 +190,7 @@ What the server offers
    * - Kind
      - Tools
    * - Look things up (change nothing)
-     - `list_providers`, `check_serviceability`, `list_service_types`, `get_rates`, `track_shipment`,
+     - `list_providers`, `check_serviceability`, `list_service_types`, `get_rates`, `track_shipment`, `search_carriers`,
        `get_order`, `list_orders`, `list_products`, `get_product`, `get_recorded_responses`
    * - Refresh and keep a result (safe to repeat)
      - `track_order`, `ndr_status`, `get_label`

@@ -43,6 +43,7 @@ from libshipkore.common.exceptions import (
 from libshipkore.files import create_file_store
 from libshipkore.provider import get_provider
 from libshipkore.storage import create_storage
+from libshipkore.track.detect import detect_carriers
 from libshipkore.track.models.model import Track
 
 DELIVERED = ("Delivered", "ReverseDelivered")
@@ -183,11 +184,15 @@ class Shipkore:
 
     # tracking ------------------------------------------------------------
 
-    def track(self, waybill, provider, refresh=False):
+    def track(self, waybill, provider=None, refresh=False):
         """
         Tracking from the store when it is recent enough, else from the
         provider. The latest result, with all its checkpoints, is kept.
+        Without a provider, the carriers whose number format fits are tried
+        in turn (see search_carriers); name the provider when it is known.
         """
+        if provider is None:
+            return self._track_detected(waybill, refresh)
         key = f"{self.provider(provider).provider}:{waybill}"
         cached = self.storage.get("tracking", key)
         if cached and not refresh:
@@ -206,6 +211,23 @@ class Shipkore:
             "track": _dump(track),
         })
         return track
+
+    def _track_detected(self, waybill, refresh):
+        candidates = detect_carriers(waybill)
+        if not candidates:
+            raise ValueError(
+                f"cannot tell the carrier from '{waybill}'; pass the provider "
+                "(search_carriers lists them)"
+            )
+        failures = []
+        for slug in candidates:
+            try:
+                return self.track(waybill, slug, refresh=refresh)
+            except Exception as error:  # a scraper that does not know this number
+                failures.append(f"{slug}: {error}")
+        raise NotFound(
+            f"no carrier tracked '{waybill}'; tried " + "; ".join(failures)
+        )
 
     # orders --------------------------------------------------------------
 
