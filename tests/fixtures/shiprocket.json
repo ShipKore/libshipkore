@@ -1,0 +1,36 @@
+{
+  "_note": "login, create order, pickup and cancel are shaped after the examples on apidocs.shiprocket.in; serviceability and assign_awb are UNVERIFIED reconstructions because the public docs show no response body for them. Not recorded from a live account.",
+  "login": {"token": "jwt-1"},
+  "login_2": {"token": "jwt-2"},
+  "serviceability": {
+    "data": {
+      "available_courier_companies": [
+        {"courier_company_id": 54, "courier_name": "Xpressbees", "rate": 120.0, "estimated_delivery_days": "4", "cod": 1},
+        {"courier_company_id": 10, "courier_name": "Delhivery Surface", "rate": 85.5, "estimated_delivery_days": "3", "cod": 1},
+        {"courier_company_id": 7, "courier_name": "Blue Dart Air", "rate": 210.0, "estimated_delivery_days": "", "cod": 0}
+      ]
+    }
+  },
+  "serviceability_none": {"data": {"available_courier_companies": []}},
+  "create_order": {
+    "order_id": 16161616, "shipment_id": 15151515, "status": "NEW", "status_code": 1,
+    "onboarding_completed_now": 0, "awb_code": null, "courier_company_id": null, "courier_name": null
+  },
+  "create_order_rejected": {"message": "Wrong pickup location entered.", "status_code": 422},
+  "assign_awb": {
+    "awb_assign_status": 1,
+    "response": {"data": {"courier_company_id": 10, "awb_code": "19041211125783", "courier_name": "Delhivery Surface"}}
+  },
+  "assign_awb_failed": {"awb_assign_status": 0, "message": "Insufficient balance"},
+  "pickup_ok": {
+    "pickup_status": 1,
+    "response": {
+      "pickup_scheduled_date": "2021-12-10 12:39:54",
+      "pickup_token_number": "Reference No: 194_BIGFOOT 1966840_11122021",
+      "status": 3,
+      "data": "Pickup is confirmed by Xpressbees 1kg For AWB :- 143254213727423"
+    }
+  },
+  "pickup_failed": {"pickup_status": 0, "response": {"data": "Already in Pickup Scheduled state"}},
+  "cancel_ok": {"message": "Bulk Shipment cancellation is in progress. Please wait for some time."}
+}

@@ -50,6 +50,8 @@ class BaseCarrier(BaseService):
                 status_code=response.status_code,
                 body=response.text,
             )
+        if not response.content:
+            return {}
         try:
             return response.json()
         except ValueError:
@@ -63,7 +65,8 @@ class BaseCarrier(BaseService):
     def _unsupported(self, operation):
         raise UnsupportedOperation(f"{self.provider}: {operation}")
 
-    def serviceability(self, pincode):
+    def serviceability(self, pincode, origin_pincode=None):
+        """origin_pincode is for carriers that price or gate by lane."""
         self._unsupported("serviceability")
 
     def rates(self, origin_pincode, destination_pincode, parcel,

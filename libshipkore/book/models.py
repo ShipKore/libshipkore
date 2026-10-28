@@ -1,5 +1,5 @@
 from datetime import date, time
-from typing import List, Optional
+from typing import Dict, List, Optional
 from pydantic import BaseModel
 import enum
 
@@ -22,6 +22,7 @@ class NdrAction(str, enum.Enum):
     Reattempt = "Reattempt"
     Defer = "Defer"
     EditDetails = "EditDetails"
+    PickupReschedule = "PickupReschedule"
 
 
 class Address(BaseModel):
@@ -62,9 +63,11 @@ class ServiceabilityResult(BaseModel):
     provider: str
     pincode: str
     serviceable: bool
-    prepaid: bool = False
-    cod: bool = False
-    pickup: bool = False
+    # None means the provider did not say, not that the mode is unsupported
+    prepaid: Optional[bool]
+    cod: Optional[bool]
+    pickup: Optional[bool]
+    remark: Optional[str]
 
 
 class Rate(BaseModel):
@@ -80,6 +83,8 @@ class Shipment(BaseModel):
     waybill: str
     order_id: str
     status: str
+    # the provider's own id when later calls need it, e.g. a pickup request
+    reference: Optional[str]
     remarks: List[str] = []
 
 
@@ -91,19 +96,27 @@ class Cancellation(BaseModel):
 
 
 class PickupRequest(BaseModel):
-    warehouse: str
+    """
+    Carriers book pickups per warehouse (Delhivery: warehouse, time and
+    package_count) or per shipment (Shiprocket: shipment_ids).
+    """
+
     pickup_date: date
-    pickup_time: time
-    package_count: int
+    warehouse: Optional[str]
+    pickup_time: Optional[time]
+    package_count: Optional[int]
+    shipment_ids: List[str] = []
 
 
 class Pickup(BaseModel):
     provider: str
     pickup_id: str
-    warehouse: str
+    warehouse: Optional[str]
+    # the provider may assign a different slot than the one requested
     pickup_date: date
-    pickup_time: time
-    package_count: int
+    pickup_time: Optional[time]
+    package_count: Optional[int]
+    center: Optional[str]
 
 
 class NdrRequest(BaseModel):
@@ -117,7 +130,10 @@ class NdrRequest(BaseModel):
 
 class NdrResult(BaseModel):
     provider: str
-    waybill: str
+    waybill: Optional[str]
     request_id: str
     status: RequestStatus = RequestStatus.Pending
     message: Optional[str]
+    # a batch can partly succeed, so check these and not only status
+    succeeded: List[str] = []
+    failed: Dict[str, str] = {}

@@ -10,8 +10,8 @@ Second pass: Delhivery, Shiprocket, Blue Dart and NimbusPost were read in the br
 | Official docs | delhivery-express-api-doc.readme.io (public) + ucp.delhivery.com/developer-portal (login) | developer.dhl.com, Blue Dart APIs (India region) | none public found | none public found | none public found |
 | Prod base URL | Y: `https://track.delhivery.com` | Y: `https://apigateway.bluedart.com/in/transportation/<api>/v1/` (waybill example paths also show `apigateway.bluedart.com/waybill/...`; verify) | ? | ? | ? |
 | Sandbox | Y: `https://staging-express.delhivery.com` (same paths as prod) | ?: changelog says a sandbox URL was added; none printed on the page | ? | ? | ? |
-| Auth | not stated in public docs; `token` query param appears on Bulk Waybill; header scheme must be confirmed in the portal | Y: consumer key/secret -> Authenticator API -> JWT, sent as `JWTToken` header; body also carries `Profile` (`LoginID`, `LicenceKey`, `Api_type`); app approval needed | Y\*: API key + client number + secret/token | Y\*: username/password -> token | Y\*: merchant code + token (+ location code) |
-| Rate limit | Y: tracking API 750 req / 5 min / IP; others not stated | ? | ? | ? | ? |
+| Auth | Y (Delhivery MCP docs): static `Authorization: Token <token>`, no expiry, separate token per environment; Bulk Waybill takes `token` as a query param | Y: consumer key/secret -> Authenticator API -> JWT, sent as `JWTToken` header; body also carries `Profile` (`LoginID`, `LicenceKey`, `Api_type`); app approval needed | Y\*: API key + client number + secret/token | Y\*: username/password -> token | Y\*: merchant code + token (+ location code) |
+| Rate limit | Y: per IP per 5 min: 750 default (tracking), 50 rates, 4500 serviceability, 4000 pickup, 12,200 cancel, 20,000 create; 403 (429 on create) when exceeded, pause ~30s | ? | ? | ? | ? |
 | Serviceability | Y: `GET /c/api/pin-codes/json/` (prepaid/COD flags) | Y: Location Finder (by pincode, product, sub-product) + Master Download (pincode master) | ? | ? | ? |
 | Rate / cost | Y: Calculate Shipping Cost + Invoice Shipping Charge APIs | N: Transit Time Finder gives delivery date, not price | ? | ? | ? |
 | Book | Y: `POST /api/cmu/create.json` (forward and reverse via `package_type`); Fetch Waybill, Bulk Waybill (`/waybill/api/{fetch,bulk}/json/`) | Y: Generate Waybill, Import Data (multi), Update E-Waybill | Y\* | Y\* | Y\* |
@@ -19,7 +19,7 @@ Second pass: Delhivery, Shiprocket, Blue Dart and NimbusPost were read in the br
 | Pickup | Y: `POST /fm/request/new/` (time, date, warehouse, qty -> `pickup_id`) | Y: Registration for Pickup (returns token no.) + Pickup Cancellation (needs token no. + registration date) | Y\* | ? | ? |
 | Cancel | Y: `POST /api/p/edit` with `"cancellation": "true"` (statuses Manifested, In Transit, Pending, Open, Scheduled) | Y: Cancel Waybill, before in-scan | Y\* | Y\* | Y\* |
 | Edit order | Y: Edit Order API | partial: Update E-Waybill only | ? | ? | ? |
-| NDR | Y: async `POST /api/p/update`; actions DEFER_DLV (max 6 days), EDIT_DETAILS, RE-ATTEMPT; returns a UPL id; Get NDR status API polls it | N: not in the India API catalog | Y\* | Y\* | Y\* |
+| NDR | Y: async `POST /api/p/update` (max 1000 per call); current portal docs list only RE-ATTEMPT and PICKUP_RESCHEDULE (the older readme.io mirror also showed DEFER_DLV and EDIT_DETAILS, now treated as unsupported); returns `request_id` (UPL id); `GET /api/cmu/get_bulk_upl/{id}?verbose=true` gives `status` Success/Failure plus `success_wbns` / `failed_wbns` (partial success possible) | N: not in the India API catalog | Y\* | Y\* | Y\* |
 | Returns | Y: reverse pickups via Order Creation (`package_type` = Pickup); Reverse Pickups page documents the status flow | N: no returns API in catalog (waybill has a `Returnadds` RTO address block) | ? | Y\* | Y\* |
 | Webhooks | Y: "Tracking via PUSH API" (client supplies endpoint + auth header; Delhivery sends a test scan; needs a live waybill) | N: none in catalog | Y\* via aggregator | Y\* | ? |
 | Tracking | Y: `GET /api/v1/packages/` | Y: Shipment Tracking (Shipment Detail, Shipment Status) | Y\* | Y\* | Y\* |
@@ -64,9 +64,15 @@ Notes: Delhivery is the most complete direct API, covers every stage, and has a 
 5. **Blue Dart gives no rates**, only transit time. The rate model needs optional price.
 6. **Auth shapes vary**: JWT exchange (Blue Dart, Shiprocket), static header key (NimbusPost), secrets in body (iThink), query token (Delhivery bulk waybill). `BaseService._auth` must stay provider-specific.
 
+## Implementation status (2026-10-28)
+
+- **Delhivery**: `libshipkore/book/carriers/delhivery.py`, written against the specs from Delhivery's developer-portal MCP (`https://mcp-client-integration.delhivery.com/mcp`, configured in `.mcp.json`). Serviceability, rates, create (forward/reverse), cancel, pickup, NDR action and status. Not yet run against staging. Not done: labels, tracking webhook, edit order.
+- **Shiprocket**: `libshipkore/book/carriers/shiprocket.py`. Login with cached token and one re-login on 401, serviceability and rates, create order + AWB assignment, cancel (async), pickup. The serviceability and AWB-assignment response shapes are reconstructed, not documented publicly. NDR, returns and tracking are not implemented (endpoints known, request bodies not read). No sandbox exists.
+- Lesson from the second carrier: serviceability needs an origin as well as a destination, and pickups are per shipment (Shiprocket) or per warehouse (Delhivery), so the shared models carry both forms.
+
 ## Remaining unverified
 
-- Delhivery: auth header format; read it from the logged-in portal (`ucp.delhivery.com/developer-portal/documents`).
+- Delhivery: everything above is from docs, not a live call.
 - Blue Dart: sandbox URL, rate limits, whether `apigateway.bluedart.com/waybill/...` or `/in/transportation/waybill/v1/` is the live path.
 - NimbusPost: base URL and endpoint payloads (endpoint pages load lazily and did not render for me).
 - Shiprocket: numeric rate limit; NDR and return request payloads (endpoints are confirmed, bodies not read).

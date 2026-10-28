@@ -1,4 +1,5 @@
 import json
+from datetime import date, time
 from ..base import BaseCarrier, carrier_registry
 from libshipkore.common.exceptions import ProviderError
 from ..models import (
@@ -17,10 +18,14 @@ from ..models import (
 @carrier_registry.register("delhivery")
 class Delhivery(BaseCarrier):
     """
-    Delhivery express API. Paths and the staging host come from
-    delhivery-express-api-doc.readme.io. The auth header format and the
-    response field names marked "unverified" are not stated in the public
-    docs and must be checked against staging with real credentials.
+    Delhivery B2C express API, written against the specs served by the
+    Delhivery developer-portal MCP (one.delhivery.com/developer-portal).
+    Not yet exercised against staging or production.
+
+    Tokens are static and environment specific: a staging token does not
+    work on production. Rate limits are per IP, e.g. 750 requests/5 min on
+    most endpoints, 50/5 min on rates; exceeding them returns 403 (or 429
+    on shipment creation), so pause about 30s before retrying.
     """
 
     provider = "delhivery"
@@ -29,16 +34,14 @@ class Delhivery(BaseCarrier):
 
     NDR_ACTIONS = {
         NdrAction.Reattempt: "RE-ATTEMPT",
-        NdrAction.Defer: "DEFER_DLV",
-        NdrAction.EditDetails: "EDIT_DETAILS",
+        NdrAction.PickupReschedule: "PICKUP_RESCHEDULE",
     }
 
     def _headers(self):
-        # unverified: documented only inside the logged-in developer portal
         token = self._credential("api_token")
         return {"Authorization": f"Token {token}", "Accept": "application/json"}
 
-    def serviceability(self, pincode):
+    def serviceability(self, pincode, origin_pincode=None):
         data = self._request(
             "GET", "/c/api/pin-codes/json/", params={"filter_codes": pincode}
         )
@@ -48,43 +51,61 @@ class Delhivery(BaseCarrier):
                 provider=self.provider, pincode=pincode, serviceable=False
             )
         entry = codes[0].get("postal_code", {})
-        prepaid = entry.get("pre_paid") == "Y"
-        cod = entry.get("cod") == "Y"
+        if isinstance(entry, list):
+            entry = entry[0] if entry else {}
+        # a blank remark means serviceable; "Embargo" is a temporary block
+        remark = entry.get("remark") or ""
+        serviceable = remark == ""
+
+        def flag(key):
+            return entry[key] == "Y" if key in entry else None
+
         return ServiceabilityResult(
             provider=self.provider,
             pincode=pincode,
-            serviceable=prepaid or cod,
-            prepaid=prepaid,
-            cod=cod,
-            pickup=entry.get("pickup") == "Y",
+            serviceable=serviceable,
+            prepaid=flag("pre_paid"),
+            cod=flag("cod"),
+            pickup=flag("pickup"),
+            remark=remark or None,
         )
 
     def rates(self, origin_pincode, destination_pincode, parcel,
-              payment_mode, cod_amount=0):
-        # unverified: path and response shape of "Calculate Shipping Cost"
-        data = self._request(
-            "GET",
-            "/api/kinko/v1/invoice/charges/.json",
-            params={
-                "md": "E",
-                "ss": "Delivered",
-                "o_pin": origin_pincode,
-                "d_pin": destination_pincode,
-                "cgm": int(parcel.weight_kg * 1000),
-                "pt": "COD" if payment_mode == PaymentMode.COD else "Pre-paid",
-                "cod": cod_amount,
-            },
-        )
+              payment_mode, cod_amount=0, mode="E"):
+        """
+        Tentative charges, subject to change on the invoice. cod_amount is
+        ignored: the API prices by payment type, not by amount. mode is
+        "E" (express) or "S" (surface).
+        """
+        params = {
+            "md": mode,
+            "ss": "Delivered",
+            "o_pin": int(origin_pincode),
+            "d_pin": int(destination_pincode),
+            "cgm": int(parcel.weight_kg * 1000),
+            "pt": "COD" if payment_mode == PaymentMode.COD else "Pre-paid",
+        }
+        for key, value in (("l", parcel.length_cm), ("b", parcel.breadth_cm),
+                           ("h", parcel.height_cm)):
+            if value is not None:
+                params[key] = int(value)
+        data = self._request("GET", "/api/kinko/v1/invoice/charges/.json",
+                             params=params)
         if isinstance(data, dict):
             data = [data]
         if not data or "total_amount" not in data[0]:
             raise ProviderError(self.provider, "no rate returned", body=data)
         return [
-            Rate(provider=self.provider, amount=row["total_amount"])
+            Rate(provider=self.provider, amount=row["total_amount"],
+                 service="Express" if mode == "E" else "Surface")
             for row in data
         ]
 
     def create_shipment(self, request):
+        """
+        A failure whose message says the package "might have been partially
+        saved" may still have created it; look it up before retrying.
+        """
         shipment = {
             "name": request.consignee.name,
             "add": request.consignee.address,
@@ -99,13 +120,13 @@ class Delhivery(BaseCarrier):
             "cod_amount": request.cod_amount,
             "total_amount": request.declared_value,
             "products_desc": request.description,
-            "quantity": request.quantity,
+            "quantity": str(request.quantity),
             "weight": request.parcel.weight_kg * 1000,
             "shipment_length": request.parcel.length_cm,
             "shipment_width": request.parcel.breadth_cm,
             "shipment_height": request.parcel.height_cm,
             "waybill": request.waybill,
-            "invoice_reference": request.invoice_number,
+            "seller_inv": request.invoice_number,
             "ewbn": request.e_waybill,
         }
         payload = {
@@ -119,22 +140,25 @@ class Delhivery(BaseCarrier):
         )
         packages = data.get("packages") or []
         package = packages[0] if packages else {}
+        remarks = [r for r in package.get("remarks") or [] if r]
         if not data.get("success") or package.get("status") != "Success":
-            reason = (
-                "; ".join(package.get("remarks") or [])
-                or data.get("rmk")
+            reason = "; ".join(remarks) or data.get("rmk") \
                 or "shipment not created"
-            )
             raise ProviderError(self.provider, reason, body=data)
         return Shipment(
             provider=self.provider,
             waybill=package["waybill"],
             order_id=request.order_id,
             status=package["status"],
-            remarks=package.get("remarks") or [],
+            remarks=remarks,
         )
 
     def cancel(self, waybill):
+        """
+        Only Manifested, In Transit and Pending shipments (Scheduled for
+        reverse pickups) can be cancelled. An in-transit shipment is
+        rerouted to origin, not removed.
+        """
         data = self._request(
             "POST",
             "/api/p/edit",
@@ -145,10 +169,19 @@ class Delhivery(BaseCarrier):
             provider=self.provider,
             waybill=waybill,
             status=RequestStatus.Accepted if accepted else RequestStatus.Failed,
-            message=data.get("error") or data.get("message"),
+            message=data.get("remark") or data.get("error"),
         )
 
     def schedule_pickup(self, request):
+        """
+        Pickups are per warehouse, not per waybill, and one request per
+        warehouse per day can be active at a time.
+        """
+        if not (request.warehouse and request.pickup_time
+                and request.package_count):
+            raise ValueError(
+                "delhivery pickups need warehouse, pickup_time and package_count"
+            )
         data = self._request(
             "POST",
             "/fm/request/new/",
@@ -160,59 +193,69 @@ class Delhivery(BaseCarrier):
             },
         )
         if "pickup_id" not in data:
-            raise ProviderError(
-                self.provider, data.get("message") or "no pickup_id", body=data
-            )
+            raise ProviderError(self.provider, "no pickup_id", body=data)
         return Pickup(
             provider=self.provider,
             pickup_id=str(data["pickup_id"]),
             warehouse=request.warehouse,
-            pickup_date=request.pickup_date,
-            pickup_time=request.pickup_time,
-            package_count=request.package_count,
+            pickup_date=date.fromisoformat(
+                data.get("pickup_date") or request.pickup_date.isoformat()
+            ),
+            pickup_time=time.fromisoformat(
+                data.get("pickup_time") or request.pickup_time.isoformat()
+            ),
+            package_count=data.get(
+                "expected_package_count", request.package_count
+            ),
+            center=data.get("incoming_center_name"),
         )
 
     def ndr_action(self, request):
-        entry = {"waybill": request.waybill, "act": self.NDR_ACTIONS[request.action]}
-        if request.action == NdrAction.Defer:
-            entry["action_data"] = {"deferred_date": request.deferred_date.isoformat()}
-        elif request.action == NdrAction.EditDetails:
-            details = {
-                "name": request.name,
-                "phone": request.phone,
-                "add": request.address,
-            }
-            entry["action_data"] = {k: v for k, v in details.items() if v}
-        data = self._request("POST", "/api/p/update", json={"data": [entry]})
-        # unverified: the docs promise a UPL id but not the field name
-        request_id = data.get("request_id") or data.get("upl_id")
-        if not request_id:
+        """
+        Asynchronous: the result carries a request id to poll with
+        ndr_status. RE-ATTEMPT needs a Pending package at one of a few
+        NSL codes and works best after 9 PM once dispatches are closed.
+        """
+        act = self.NDR_ACTIONS.get(request.action)
+        if act is None:
+            self._unsupported(f"ndr_action {request.action.value}")
+        data = self._request(
+            "POST",
+            "/api/p/update",
+            json={"data": [{"waybill": request.waybill, "act": act}]},
+        )
+        if not data.get("request_id"):
             raise ProviderError(self.provider, "no NDR request id", body=data)
         return NdrResult(
             provider=self.provider,
             waybill=request.waybill,
-            request_id=str(request_id),
+            request_id=str(data["request_id"]),
             status=RequestStatus.Pending,
+            message=data.get("message"),
         )
 
     def ndr_status(self, request_id):
-        # unverified: path and response shape of "Get NDR status"
         data = self._request(
             "GET",
             f"/api/cmu/get_bulk_upl/{request_id}",
             params={"verbose": "true"},
         )
-        state = str(data.get("status", "")).lower()
-        if state in ("completed", "success"):
+        outcome = str(data.get("status", "")).lower()
+        if outcome == "success":
             status = RequestStatus.Completed
-        elif state == "failed":
+        elif outcome == "failure":
             status = RequestStatus.Failed
         else:
             status = RequestStatus.Pending
         return NdrResult(
             provider=self.provider,
-            waybill=data.get("waybill", ""),
+            waybill=None,
             request_id=str(request_id),
             status=status,
-            message=data.get("message"),
+            message=data.get("remark"),
+            succeeded=[w["waybill"] for w in data.get("success_wbns") or []],
+            failed={
+                w["waybill"]: w.get("message", "")
+                for w in data.get("failed_wbns") or []
+            },
         )

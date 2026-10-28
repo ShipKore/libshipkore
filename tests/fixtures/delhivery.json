@@ -1,36 +1,69 @@
 {
-  "_note": "Hand-written from the shapes in delhivery-express-api-doc.readme.io and the maintainers' recollection of the live API; NOT recorded from staging. Replace with recorded responses once credentials exist.",
-  "serviceability_ok": {
+  "_note": "Shaped after the example payloads in the Delhivery developer-portal MCP specs (fetched 2026-10-28); NOT recorded from staging. Replace with recorded responses once a staging token exists.",
+  "serviceability_ok": {"delivery_codes": [{"postal_code": [{"remark": ""}]}]},
+  "serviceability_flags": {
     "delivery_codes": [
-      {"postal_code": {"pin": 110001, "pre_paid": "Y", "cod": "Y", "pickup": "Y", "repl": "N"}}
+      {"postal_code": {"pin": 110001, "pre_paid": "Y", "cod": "N", "pickup": "Y", "remark": ""}}
     ]
   },
-  "serviceability_prepaid_only": {
-    "delivery_codes": [
-      {"postal_code": {"pin": 999999, "pre_paid": "Y", "cod": "N", "pickup": "N"}}
-    ]
-  },
+  "serviceability_embargo": {"delivery_codes": [{"postal_code": [{"remark": "Embargo"}]}]},
   "serviceability_none": {"delivery_codes": []},
-  "rates": [{"total_amount": 85.5, "zone": "D"}],
+  "rates": [{"total_amount": 85.5, "gross_amount": 72.46, "zone": "D", "charged_weight": 2000, "divisor": 5000}],
+  "rates_bad_mode": {"error": "md is mandatory field and possible values can be S,E"},
   "create_ok": {
-    "success": true,
+    "cash_pickups_count": 0.0,
+    "package_count": 1,
+    "upload_wbn": "UPL1431491104292619890",
     "packages": [
-      {"waybill": "1234567890123", "status": "Success", "refnum": "ORD-1", "remarks": []}
-    ]
+      {"status": "Success", "sort_code": "342", "remarks": [""], "waybill": "1234567890123",
+       "cod_amount": 999.0, "payment": "COD", "serviceable": true, "refnum": "ORD-1"}
+    ],
+    "success": true,
+    "rmk": ""
   },
   "create_duplicate": {
+    "package_count": 0,
+    "packages": [
+      {"status": "Fail", "waybill": "", "remarks": ["Duplicate Order Id"], "refnum": "ORD-1"}
+    ],
     "success": false,
     "rmk": "An internal Error has occurred",
-    "packages": [
-      {"waybill": "", "status": "Fail", "remarks": ["Order Id already exists"]}
-    ]
+    "error": false
   },
-  "cancel_ok": {"status": true, "order_id": "ORD-1"},
-  "cancel_rejected": {"status": false, "error": "Package cannot be cancelled in Delivered state"},
-  "pickup_ok": {"pickup_id": 987654, "incoming_center_name": "Delhi_Main_Hub"},
-  "pickup_fail": {"message": "Warehouse not found"},
-  "ndr_accepted": {"request_id": "UPL-0001"},
-  "ndr_no_id": {"message": "bad request"},
-  "ndr_status_pending": {"status": "Pending"},
-  "ndr_status_done": {"status": "Completed", "waybill": "1234567890123"}
+  "create_bad_warehouse": {
+    "success": false,
+    "packages": [],
+    "rmk": "ClientWarehouse matching query does not exist.",
+    "error": false
+  },
+  "cancel_ok": {"status": true, "waybill": "1234567890123", "remark": "Shipment has been cancelled.", "order_id": "ORD-1"},
+  "cancel_rejected": {
+    "status": false, "waybill": "1234567890123", "remark": null, "order_id": "ORD-1",
+    "error": "Shipment status cannot be changed as shipment is either picked up or already in return flow"
+  },
+  "pickup_ok": {
+    "pickup_location_name": "Main Warehouse",
+    "client_name": "00c85f-TEST-do-cdp",
+    "pickup_time": "16:00:00",
+    "pickup_id": 118775,
+    "incoming_center_name": "Mumbai MIDC",
+    "expected_package_count": 5,
+    "pickup_date": "2026-11-03"
+  },
+  "pickup_bad_warehouse": {"pickup_location": "Invalid Pickup Location ClientWarehouse matching query does not exist."},
+  "ndr_accepted": {"message": "Request submitted successfully!", "request_id": "UPL17749083484755923441"},
+  "ndr_no_id": {"message": "Request submitted successfully!"},
+  "ndr_status_done": {
+    "status": "Success", "remark": "1 waybills affected",
+    "failed_wbns": [],
+    "success_wbns": [{"waybill": "1234567890123", "action": "RE-ATTEMPT"}],
+    "request_id": "UPL17749083484755923441"
+  },
+  "ndr_status_partial": {
+    "status": "Failure", "remark": "1 waybills affected",
+    "failed_wbns": [{"action": "RE-ATTEMPT", "waybill": "999", "message": "Package in incorrect status"}],
+    "success_wbns": [{"waybill": "1234567890123", "action": "RE-ATTEMPT"}],
+    "request_id": "UPL17749083484755923441"
+  },
+  "ndr_status_unknown": {"status": "In Progress", "request_id": "UPL17749083484755923441"}
 }
