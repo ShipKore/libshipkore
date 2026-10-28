@@ -1,11 +1,11 @@
 import logging
 import requests
-from class_registry import ClassRegistry
 from libshipkore.common.baseservice import BaseService
 from libshipkore.common.exceptions import ProviderError, UnsupportedOperation
+from libshipkore.common.registry import Registry
 from libshipkore.track import get_track_data, track_registry
 
-carrier_registry = ClassRegistry()
+carrier_registry = Registry()
 logger = logging.getLogger(__name__)
 
 OPERATIONS = (

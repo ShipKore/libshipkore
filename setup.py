@@ -17,7 +17,6 @@ requirements = [
     "requests>=2.27.1",
     "pydantic>=2.12,<3",
     "parsel>=1.6.0",
-    "class-registry>=2.1.2",
 ]
 
 setup_requirements = [

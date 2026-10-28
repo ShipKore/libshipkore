@@ -1,8 +1,8 @@
 from libshipkore.common.baseservice import BaseService
-from class_registry import ClassRegistry
+from libshipkore.common.registry import Registry
 from ..models.model import Track
 
-track_registry = ClassRegistry()
+track_registry = Registry()
 
 
 class BaseTrackService(BaseService):

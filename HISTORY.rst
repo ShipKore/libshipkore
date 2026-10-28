@@ -27,6 +27,9 @@ Added:
 
 Fixed:
 
+* ``import libshipkore`` failed on Python 3.12 and later (and in any fresh ``uvx`` or virtualenv without
+  setuptools): the unmaintained ``class-registry`` dependency imported ``pkg_resources`` without declaring
+  it. It is replaced by a small built-in registry, and the dependency is gone.
 * The ``globegistics`` alias pointed at a tracker that does not exist.
 * ``bump2version`` could not run: its search patterns used single quotes while the files use double
   quotes, and the plugin manifest was not listed.

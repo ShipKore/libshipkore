@@ -8,10 +8,8 @@ about the repo matches the repo.
 """
 
 import configparser
-import importlib.util
 import json
 import os
-import pathlib
 import re
 import shutil
 import subprocess
@@ -151,10 +149,13 @@ def test_the_commands_match_the_repo_s_own_settings():
         assert re.search(rf"^{extra} = \[", pyproject, re.M), extra
 
 
-def test_the_setuptools_pin_is_still_needed():
-    spec = importlib.util.find_spec("class_registry.entry_points")
-    assert "pkg_resources" in pathlib.Path(spec.origin).read_text()
-    assert 'setuptools<81' in text_of("AGENTS.md")
+def test_no_dependency_is_declared_that_needs_setuptools_at_runtime():
+    # class-registry imported pkg_resources and did not depend on setuptools; Python 3.12+
+    # virtualenvs have none, so it broke every fresh install. See tests/test_registry.py.
+    for name in ("pyproject.toml", "setup.py", "requirements_dev.txt"):
+        with open(os.path.join(ROOT, name)) as handle:
+            assert "class-registry" not in handle.read(), name
+    assert "setuptools" not in text_of("AGENTS.md").split("## Set up and check your work")[1].split("```")[1]
 
 
 def test_the_courier_count_is_true():

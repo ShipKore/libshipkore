@@ -8,13 +8,13 @@ Python >= 3.10 and pydantic 2 only. The working language of the repo is English;
 
 ```bash
 uv venv -p 3.11 .venv
-uv pip install -p .venv/bin/python -e ".[mcp,sql]" pytest responses pyyaml flake8 "setuptools<81"
+uv pip install -p .venv/bin/python -e ".[mcp,sql]" pytest responses pyyaml flake8
 .venv/bin/python -m pytest -q                              # the whole suite, about 30 seconds
 .venv/bin/flake8 --ignore=E501,W503 libshipkore tests      # the repo's own flake8 settings (tox.ini)
 claude plugin validate plugin && claude plugin validate .  # if the claude CLI is installed
 ```
 
-- `setuptools<81` is needed because `class-registry` imports `pkg_resources`.
+- Nothing needs setuptools: `libshipkore/common/registry.py` replaced the unmaintained `class-registry` package, whose `pkg_resources` import broke `import libshipkore` on Python 3.12 and later. A test imports the library with `pkg_resources` blocked.
 - The MCP and HTTP tests start real server processes on free local ports; they need no network.
 - **One test fails today and is not your doing:** `test_command_line_interface` in `tests/test_libshipkore.py` (the CLI exits 2 when run with no arguments under the installed Click 8). Any other failure is yours.
 - Run the suite on more than one Python (3.10 and 3.13 are the edges) before calling work done.
