@@ -202,10 +202,11 @@ def test_bump2version_can_actually_find_the_version_in_every_file():
 
 
 @pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")
-def test_the_ds_store_warning_matches_what_git_tracks():
+def test_ds_store_files_are_ignored_and_not_tracked():
     listing = subprocess.run(["git", "ls-files"], cwd=ROOT, text=True, capture_output=True)
     if listing.returncode != 0:
         pytest.skip("not a git checkout")
-    tracked = any(path.endswith(".DS_Store") for path in listing.stdout.splitlines())
-    warns = "tracked by mistake" in text_of("AGENTS.md")
-    assert tracked == warns, "AGENTS.md and the repository disagree about .DS_Store"
+    assert not [p for p in listing.stdout.splitlines() if p.endswith(".DS_Store")]
+    with open(os.path.join(ROOT, ".gitignore")) as handle:
+        assert ".DS_Store" in handle.read().splitlines()
+    assert "tracked by mistake" not in text_of("AGENTS.md").replace("used to be tracked by mistake", "")

@@ -105,3 +105,6 @@ ENV/
 .vscode/
 .pypirc
 testarea/
+
+# macOS Finder litter
+.DS_Store
