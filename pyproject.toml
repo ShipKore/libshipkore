@@ -13,6 +13,19 @@ click = "^8.0.3"
 pydantic = "^2.12"
 parsel = "^1.6.0"
 class-registry = "^2.1.2"
+# optional features, installed with e.g. pip install "libshipkore[mcp]"
+mcp = {version = ">=2.3,<3", optional = true}
+sqlalchemy = {version = ">=1.4", optional = true}
+boto3 = {version = ">=1.26", optional = true}
+
+[tool.poetry.extras]
+mcp = ["mcp"]
+sql = ["sqlalchemy"]
+s3 = ["boto3"]
+
+[tool.poetry.scripts]
+libshipkore = "libshipkore.cli:main"
+libshipkore-mcp = "libshipkore.mcp_server.__main__:main"
 
 [tool.poetry.dev-dependencies]
 

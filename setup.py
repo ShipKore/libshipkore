@@ -46,6 +46,7 @@ setup(
     entry_points={
         "console_scripts": [
             "libshipkore=libshipkore.cli:main",
+            "libshipkore-mcp=libshipkore.mcp_server.__main__:main",
         ],
     },
     install_requires=requirements,
@@ -54,6 +55,8 @@ setup(
         "sql": ["sqlalchemy>=1.4"],
         # S3FileStore: AWS S3, MinIO, R2, Spaces and other S3-compatible stores
         "s3": ["boto3>=1.26"],
+        # the MCP server for AI agents: the libshipkore-mcp command
+        "mcp": ["mcp>=2.3,<3"],
     },
     long_description=readme + "\n\n" + history,
     include_package_data=True,

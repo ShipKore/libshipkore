@@ -6,6 +6,10 @@ class CredentialsError(ShipkoreError):
     """A required credential was not supplied."""
 
 
+class ConfigError(ShipkoreError):
+    """The configuration file or its environment variables are invalid."""
+
+
 class StorageError(ShipkoreError):
     """The database or file storage failed or is misconfigured."""
 
