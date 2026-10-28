@@ -164,6 +164,8 @@ class DeclarativeTracker(BaseTrackService):
 def load_specs(directory=SPEC_DIR):
     """Register every *.json spec in the directory; a bad spec fails loudly at import."""
     loaded = []
+    if not os.path.isdir(directory):  # git does not keep an empty directory
+        return loaded
     for name in sorted(os.listdir(directory)):
         if not name.endswith(".json"):
             continue

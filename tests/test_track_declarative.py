@@ -140,3 +140,8 @@ def test_every_candidate_failing_is_reported(monkeypatch):
     monkeypatch.setattr(kore, "provider", lambda slug: (_ for _ in ()).throw(RuntimeError("down")))
     with pytest.raises(NotFound, match="fedex: down"):
         kore.track("123456789012")
+
+
+def test_a_missing_spec_directory_means_no_specs_not_a_crash(tmp_path):
+    # the shipped directory is empty today, and git does not store empty directories
+    assert declarative.load_specs(str(tmp_path / "absent")) == []
