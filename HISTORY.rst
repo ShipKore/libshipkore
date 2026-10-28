@@ -17,6 +17,9 @@ Added:
 * Booking for Delhivery and Shiprocket: serviceability, rates, create, label, cancel, pickup
   and (Delhivery) NDR, through one interface: ``get_provider``.
 * ``Shipkore`` facade for tracking, orders, labels, products and service types.
+* An MCP server (``libshipkore-mcp``, extra ``libshipkore[mcp]``) with 19 tools over stdio or
+  local HTTP, and a Claude Code plugin with skills for tracking, shipping, failed deliveries and
+  setup. Tools that change something at a provider use preview-then-confirm.
 * Configurable storage (memory, SQLite, SQLAlchemy, custom) and an S3-compatible file store
   for label PDFs.
 

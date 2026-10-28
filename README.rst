@@ -132,6 +132,36 @@ If `files` is not given (or `LIBSHIPKORE_FILES` is unset), labels are not copied
 provider's own link is kept until it expires; Delhivery's lasts 24 hours.
 
 
+Use it from an AI agent
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+libshipkore ships an MCP server (`libshipkore-mcp`) and a Claude Code plugin with skills for
+tracking, shipping an order, handling failed deliveries and setup.
+
+.. code-block:: bash
+
+   claude plugin marketplace add ShipKore/libshipkore
+   claude plugin install libshipkore@shipkore
+
+The plugin starts the server with `uvx` (so it needs `uv`), and until 0.5.0 is released on PyPI
+it installs from GitHub. Tracking works with no setup. To book shipments, run the
+`setup-libshipkore` skill: it helps you write a config file with your courier credentials as
+`${ENV_VAR}` references, so no secret goes through the chat.
+
+Any other MCP client can run the server directly:
+
+.. code-block:: bash
+
+   pip install "libshipkore[mcp]"
+   libshipkore-mcp --config /path/config.json              # stdio, started by the client
+   libshipkore-mcp --transport http --config /path/config.json   # http://127.0.0.1:8765/mcp, local only
+
+Tools that book, cancel, schedule pickups or act on failed deliveries take two calls: a preview that
+changes nothing, then a confirmation with a single-use token bound to the exact arguments. That is
+a checkpoint, not proof a person approved, so the agent is told to show the preview and wait for a
+real yes, and the client can ask you directly where it supports it. The HTTP transport listens on
+the local machine only and requires a bearer token (`LIBSHIPKORE_MCP_TOKEN`, or one is generated).
+
 As Code (like cloning this Repo)
 -----------
 

@@ -1,0 +1,23 @@
+{
+  "name": "libshipkore",
+  "displayName": "libshipkore shipping",
+  "version": "0.5.0",
+  "description": "Track shipments and book, label, cancel and manage orders with Indian and global carriers. Writes always ask for approval first.",
+  "author": {
+    "name": "Innerkore",
+    "email": "admin@innerkore.com",
+    "url": "https://github.com/ShipKore"
+  },
+  "homepage": "https://github.com/ShipKore/libshipkore",
+  "repository": "https://github.com/ShipKore/libshipkore",
+  "license": "AGPL-3.0",
+  "keywords": ["shipping", "logistics", "tracking", "courier", "india", "delhivery", "shiprocket"],
+  "userConfig": {
+    "config_file": {
+      "type": "file",
+      "title": "libshipkore config file",
+      "description": "JSON file with your provider credentials, storage and label file store. Leave empty to only track shipments. Run the setup-libshipkore skill for help writing one.",
+      "required": false
+    }
+  }
+}

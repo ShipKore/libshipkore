@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "libshipkore": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "libshipkore[mcp] @ git+https://github.com/ShipKore/libshipkore",
+        "libshipkore-mcp"
+      ],
+      "env": {
+        "LIBSHIPKORE_CONFIG": "${user_config.config_file}"
+      }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "shipkore",
+  "description": "Shipping tools for AI agents: tracking and booking with Indian and global carriers.",
+  "owner": {
+    "name": "Innerkore",
+    "email": "admin@innerkore.com"
+  },
+  "plugins": [
+    {
+      "name": "libshipkore",
+      "source": "./plugin",
+      "description": "Track shipments and book, label, cancel and manage orders with Indian and global carriers. Writes always ask for approval first."
+    }
+  ]
+}
