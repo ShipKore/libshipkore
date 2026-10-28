@@ -5,7 +5,7 @@ Nothing here runs by itself. Do not tag, push or upload until you have decided t
 ## Gates
 
 1. **Has any carrier run against a real API?** `libshipkore/data/provider-capability-matrix.md` says none has: Delhivery and Shiprocket were written from their documentation and tested with mocked responses. Either run Delhivery against its staging environment (needs a staging token) and replace the hand-written fixtures in `tests/fixtures/delhivery.json` with recorded ones, or release as a clearly labelled pre-release and say so in `HISTORY.rst` and `README.rst`.
-2. **Regenerate `poetry.lock`.** It is stale since the move to pydantic 2 and the new extras: `poetry lock`.
+2. **`poetry.lock` is current.** It was regenerated for 0.5.0 with `uvx poetry lock --regenerate` and its exact versions were installed in a clean Python 3.12 environment and tested. Regenerate it if any dependency changed since, and `tests/test_packaging.py` will tell you if it no longer matches `pyproject.toml`.
 
 ## Checklist
 

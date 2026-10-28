@@ -45,7 +45,7 @@ claude plugin validate plugin && claude plugin validate .  # if the claude CLI i
 ## Packaging and git
 
 - Wheels are built from `pyproject.toml` (poetry-core). `setup.py` repeats the metadata; keep both in step. The version lives in `pyproject.toml`, `setup.py`, `libshipkore/__init__.py`, `setup.cfg` and `plugin/.claude-plugin/plugin.json`; a test checks the last against the package.
-- `poetry.lock` is stale after the move to pydantic 2 and the new extras; regenerate it with `poetry lock`.
+- `poetry.lock` was regenerated for 0.5.0 (`uvx poetry lock --regenerate`, which needs no install). Redo it whenever a dependency changes; `tests/test_packaging.py` checks it still matches `pyproject.toml`.
 - `.DS_Store` is gitignored (it used to be tracked by mistake). Never force-add it.
 - Releasing: follow `RELEASING.md`. `bump2version` makes a commit and a tag, so dry-run it first.
 - Do not push, tag, or publish without being asked. Commit messages say what changed and why, and note anything unverified.
