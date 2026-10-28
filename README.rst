@@ -9,6 +9,8 @@ This is first Open source product of Innerkore Technologies. We are commited to 
 Installation
 -------------
 
+Requires Python 3.10 or newer and pydantic 2.
+
 .. code-block:: python
 
    pip install libshipkore

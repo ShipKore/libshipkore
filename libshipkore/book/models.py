@@ -1,6 +1,7 @@
 from datetime import date, datetime, time
 from typing import Dict, List, Optional
-from pydantic import BaseModel
+from pydantic import Field
+from libshipkore.common.models import Model
 import enum
 
 
@@ -25,25 +26,25 @@ class NdrAction(str, enum.Enum):
     PickupReschedule = "PickupReschedule"
 
 
-class Address(BaseModel):
+class Address(Model):
     name: str
     phone: str
     address: str
     pincode: str
-    city: Optional[str]
-    state: Optional[str]
+    city: Optional[str] = None
+    state: Optional[str] = None
     country: str = "India"
-    email: Optional[str]
+    email: Optional[str] = None
 
 
-class Parcel(BaseModel):
+class Parcel(Model):
     weight_kg: float
-    length_cm: Optional[float]
-    breadth_cm: Optional[float]
-    height_cm: Optional[float]
+    length_cm: Optional[float] = None
+    breadth_cm: Optional[float] = None
+    height_cm: Optional[float] = None
 
 
-class ShipmentRequest(BaseModel):
+class ShipmentRequest(Model):
     order_id: str
     consignee: Address
     pickup_location: str
@@ -51,131 +52,131 @@ class ShipmentRequest(BaseModel):
     payment_mode: PaymentMode = PaymentMode.Prepaid
     cod_amount: float = 0
     declared_value: float = 0
-    description: Optional[str]
+    description: Optional[str] = None
     quantity: int = 1
-    waybill: Optional[str]
+    waybill: Optional[str] = None
     is_reverse: bool = False
-    invoice_number: Optional[str]
-    e_waybill: Optional[str]
+    invoice_number: Optional[str] = None
+    e_waybill: Optional[str] = None
 
 
-class ServiceabilityResult(BaseModel):
+class ServiceabilityResult(Model):
     provider: str
     pincode: str
     serviceable: bool
     # None means the provider did not say, not that the mode is unsupported
-    prepaid: Optional[bool]
-    cod: Optional[bool]
-    pickup: Optional[bool]
-    remark: Optional[str]
+    prepaid: Optional[bool] = None
+    cod: Optional[bool] = None
+    pickup: Optional[bool] = None
+    remark: Optional[str] = None
 
 
-class Rate(BaseModel):
+class Rate(Model):
     provider: str
     amount: float
     currency: str = "INR"
-    service: Optional[str]
-    estimated_days: Optional[int]
+    service: Optional[str] = None
+    estimated_days: Optional[int] = None
 
 
-class Shipment(BaseModel):
+class Shipment(Model):
     provider: str
     waybill: str
     order_id: str
     status: str
     # the provider's own id when later calls need it, e.g. a pickup request
-    reference: Optional[str]
+    reference: Optional[str] = None
     remarks: List[str] = []
 
 
-class Label(BaseModel):
+class Label(Model):
     provider: str
     waybill: str
-    url: Optional[str]
-    content: Optional[bytes]
+    url: Optional[str] = None
+    content: Optional[bytes] = Field(default=None, exclude=True)
     content_type: str = "application/pdf"
     # signed links lapse; download or regenerate before this many seconds
-    expires_in: Optional[int]
+    expires_in: Optional[int] = None
     # set when a copy of the PDF is kept in the file store
-    storage_key: Optional[str]
+    storage_key: Optional[str] = None
 
 
-class Cancellation(BaseModel):
+class Cancellation(Model):
     provider: str
     waybill: str
     status: RequestStatus
-    message: Optional[str]
+    message: Optional[str] = None
 
 
-class PickupRequest(BaseModel):
+class PickupRequest(Model):
     """
     Carriers book pickups per warehouse (Delhivery: warehouse, time and
     package_count) or per shipment (Shiprocket: shipment_ids).
     """
 
     pickup_date: date
-    warehouse: Optional[str]
-    pickup_time: Optional[time]
-    package_count: Optional[int]
+    warehouse: Optional[str] = None
+    pickup_time: Optional[time] = None
+    package_count: Optional[int] = None
     shipment_ids: List[str] = []
 
 
-class Pickup(BaseModel):
+class Pickup(Model):
     provider: str
     pickup_id: str
-    warehouse: Optional[str]
+    warehouse: Optional[str] = None
     # the provider may assign a different slot than the one requested
     pickup_date: date
-    pickup_time: Optional[time]
-    package_count: Optional[int]
-    center: Optional[str]
+    pickup_time: Optional[time] = None
+    package_count: Optional[int] = None
+    center: Optional[str] = None
 
 
-class NdrRequest(BaseModel):
+class NdrRequest(Model):
     waybill: str
     action: NdrAction
-    deferred_date: Optional[date]
-    name: Optional[str]
-    phone: Optional[str]
-    address: Optional[str]
+    deferred_date: Optional[date] = None
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
 
 
-class NdrResult(BaseModel):
+class NdrResult(Model):
     provider: str
-    waybill: Optional[str]
+    waybill: Optional[str] = None
     request_id: str
     status: RequestStatus = RequestStatus.Pending
-    message: Optional[str]
+    message: Optional[str] = None
     # a batch can partly succeed, so check these and not only status
     succeeded: List[str] = []
     failed: Dict[str, str] = {}
 
 
-class ServiceType(BaseModel):
+class ServiceType(Model):
     """A service level a provider offers, such as Express or Surface."""
 
     provider: str
     code: str
     name: str
-    mode: Optional[str]
+    mode: Optional[str] = None
 
 
-class Product(BaseModel):
+class Product(Model):
     """A catalog entry that orders refer to by sku."""
 
     sku: str
     name: str
     price: float
     weight_kg: float
-    description: Optional[str]
-    hsn: Optional[str]
-    tax_percent: Optional[float]
-    length_cm: Optional[float]
-    breadth_cm: Optional[float]
-    height_cm: Optional[float]
+    description: Optional[str] = None
+    hsn: Optional[str] = None
+    tax_percent: Optional[float] = None
+    length_cm: Optional[float] = None
+    breadth_cm: Optional[float] = None
+    height_cm: Optional[float] = None
 
 
-class OrderItem(BaseModel):
+class OrderItem(Model):
     sku: str
     quantity: int = 1
 
@@ -187,7 +188,7 @@ class OrderStatus(str, enum.Enum):
     Cancelled = "Cancelled"
 
 
-class Order(BaseModel):
+class Order(Model):
     order_id: str
     provider: str
     status: OrderStatus
@@ -198,14 +199,14 @@ class Order(BaseModel):
     cod_amount: float = 0
     declared_value: float = 0
     items: List[OrderItem] = []
-    description: Optional[str]
-    invoice_number: Optional[str]
-    waybill: Optional[str]
-    reference: Optional[str]
-    error: Optional[str]
+    description: Optional[str] = None
+    invoice_number: Optional[str] = None
+    waybill: Optional[str] = None
+    reference: Optional[str] = None
+    error: Optional[str] = None
     # latest tracking status, set when the order is tracked
-    delivery_status: Optional[str]
-    pickup: Optional[Pickup]
+    delivery_status: Optional[str] = None
+    pickup: Optional[Pickup] = None
     ndr: List[NdrResult] = []
     created_at: datetime
     updated_at: datetime

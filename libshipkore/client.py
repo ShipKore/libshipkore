@@ -14,7 +14,6 @@ service types, on top of any provider, with storage behind it.
     shipkore.track_order("ORD-1")
 """
 import contextlib
-import json
 import uuid
 from contextvars import ContextVar
 from datetime import datetime, timezone
@@ -34,6 +33,7 @@ from libshipkore.book.models import (
     RequestStatus,
     ShipmentRequest,
 )
+from libshipkore.common.serialization import to_jsonable
 from libshipkore.common.exceptions import (
     DuplicateOrder,
     NotFound,
@@ -49,8 +49,7 @@ DELIVERED = ("Delivered", "ReverseDelivered")
 MAX_RECORDED_BODY = 100_000
 
 
-def _dump(model):
-    return json.loads(model.json())
+_dump = to_jsonable
 
 
 class Shipkore:
@@ -404,7 +403,7 @@ class Shipkore:
             content = label.content or self._download(label.url)
             self.files.put(key, content, label.content_type)
             document["storage_key"] = key
-            label = label.copy(update={
+            label = label.model_copy(update={
                 "url": self.files.url(key, self.label_url_expiry),
                 "content": None,
                 "storage_key": key,

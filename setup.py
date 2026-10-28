@@ -15,7 +15,7 @@ requirements = [
     "beautifulsoup4>=4.10.0",
     "python-dateutil>=2.8.2",
     "requests>=2.27.1",
-    "pydantic>=1.9.0",
+    "pydantic>=2.12,<3",
     "parsel>=1.6.0",
     "class-registry>=2.1.2",
 ]
@@ -31,14 +31,16 @@ test_requirements = [
 setup(
     author="Innerkore",
     author_email="admin@innerkore.com",
-    python_requires=">=3.7",
+    python_requires=">=3.10",
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Intended Audience :: Developers",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
     ],
     description="Shipkore tracking library and CLI",
     entry_points={
@@ -62,6 +64,6 @@ setup(
     test_suite="tests",
     tests_require=test_requirements,
     url="https://github.com/shipkore/libshipkore",
-    version="0.4.2",
+    version="0.5.0",
     zip_safe=False,
 )

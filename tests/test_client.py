@@ -271,7 +271,7 @@ def _booked_order_json(kore):
         order_id="X", provider="delhivery", status="Booked", consignee=consignee(),
         pickup_location="W", parcel=Parcel(weight_kg=1), waybill="1",
         created_at=now, updated_at=now,
-    ).json()
+    ).model_dump_json()
 
 
 # labels --------------------------------------------------------------------

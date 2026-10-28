@@ -1,7 +1,9 @@
 language: python
 python:
-- 3.8
-- 3.7
+- 3.13
+- 3.12
+- 3.11
+- 3.10
 install: pip install -U tox-travis
 script: tox
 deploy:
@@ -13,4 +15,4 @@ deploy:
   on:
     tags: true
     repo: Shipkore/libshipkore
-    python: 3.8
+    python: 3.11

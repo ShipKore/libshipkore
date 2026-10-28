@@ -3,7 +3,7 @@ import sys
 import json
 import click
 from libshipkore import libshipkore_base
-from pydantic.json import pydantic_encoder
+from libshipkore.common.serialization import to_jsonable
 
 
 @click.group()
@@ -26,7 +26,7 @@ def providers_cli():
 def track(provider, waybill):
     """Console script for libshipkore."""
     result = libshipkore_base.get_track_data(provider, waybill)
-    print(json.dumps(result, indent=4, default=pydantic_encoder))
+    print(json.dumps(result, indent=4, default=to_jsonable))
     return result
 
 
