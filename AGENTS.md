@@ -52,4 +52,4 @@ claude plugin validate plugin && claude plugin validate .  # if the claude CLI i
 
 ## Not done yet
 
-Shiprocket NDR, returns and tracking; Blue Dart, DTDC, Xpressbees, Ekart and the other carriers in the matrix; recorded (non-hand-written) fixtures; the CLI does not use the `Shipkore` facade; only the Delhivery and Ekart trackers have tests.
+Shiprocket NDR, returns and tracking; Blue Dart, DTDC, Xpressbees, Ekart and the other carriers in the matrix; recorded (non-hand-written) fixtures; the CLI (`libshipkore/cli.py`) is read-only on purpose and has no booking commands; only the Delhivery and Ekart trackers have tests.

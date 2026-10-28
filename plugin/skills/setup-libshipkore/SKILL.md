@@ -52,6 +52,7 @@ In Claude Code run `/plugin`, open libshipkore, choose Configure and enter the f
 1. `list_providers`: the provider should now show `configured: true`, and `sandbox` should match the file.
 2. Call `check_serviceability` for a pincode. A `HTTP 401` or "Invalid Token" error means the token is wrong or is for the other environment.
 3. If a tool still reports a missing credential, the environment variable is probably not set in the process that started Claude Code.
+4. If `/mcp` shows libshipkore as failed to connect, the server refused to start: the config file is invalid JSON, has a misspelt key, or refers to an `${ENV_VAR}` that is not set. Claude Code only shows "failed", so run `libshipkore-mcp --config /path/config.json` in a terminal to read the exact message (press Ctrl-C to stop it).
 
 ## Running the server yourself
 

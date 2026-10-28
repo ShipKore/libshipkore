@@ -14,6 +14,12 @@ Breaking:
 
 Added:
 
+* The command line runs on the ``Shipkore`` facade: ``libshipkore --config FILE`` (or ``LIBSHIPKORE_CONFIG``)
+  with ``providers``, ``track`` (now with ``--refresh`` and stored results), ``serviceability``, ``services``,
+  ``rates``, ``orders`` and ``order``. A bare ``libshipkore`` prints help and exits 0 on every Click version.
+  ``providers`` now prints JSON (provider and operations) instead of a Python list. Booking and other changes
+  are deliberately not in the CLI.
+* A mistyped provider name is corrected in the error itself ("Did you mean delhivery?"), for every front end.
 * Booking for Delhivery and Shiprocket: serviceability, rates, create, label, cancel, pickup
   and (Delhivery) NDR, through one interface: ``get_provider``.
 * ``Shipkore`` facade for tracking, orders, labels, products and service types.

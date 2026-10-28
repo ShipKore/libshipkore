@@ -20,6 +20,13 @@ from libshipkore.track import track_registry  # noqa: E402
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+def section(text, title):
+    """The text under a heading (its underline follows it), up to the next heading of the same kind."""
+    match = re.search(rf"^{re.escape(title)}\n([.~=-])\1+\n(.*?)(?=^[^\n]+\n\1{{4,}}\n|\Z)", text, re.M | re.S)
+    assert match, f"no section titled {title!r}"
+    return match.group(2)
+
+
 @pytest.fixture
 def readme():
     with open(os.path.join(ROOT, "README.rst")) as handle:
@@ -41,13 +48,12 @@ async def test_every_tool_and_resource_the_server_has_is_in_the_readme(readme):
         assert f"`{tool}`" in readme, f"README does not mention the tool {tool}"
     for uri in resources | templates:
         assert uri in readme, f"README does not mention the resource {uri}"
-    mentioned = set(re.findall(r"`([a-z]+(?:_[a-z]+)+)`", readme.split("What the server offers")[1]
-                               .split("The config file")[0]))
+    mentioned = set(re.findall(r"`([a-z]+(?:_[a-z]+)+)`", section(readme, "What the server offers")))
     assert mentioned == tools, f"the tool table and the server disagree: {mentioned ^ tools}"
 
 
 def test_every_config_key_is_explained(readme):
-    config = readme.split("The config file")[1].split("Other MCP clients")[0]
+    config = section(readme, "The config file")
     for key in ALLOWED_KEYS:
         assert f"`{key}`" in config, f"README does not explain the config key {key}"
     example = re.search(r"\.\. code-block:: json\n\n(.*?)\n\n", config, re.S).group(1)
@@ -96,3 +102,18 @@ def test_where_the_plugin_installs_from_matches_what_the_readme_says(readme):
 
 def test_the_readme_says_plainly_that_nothing_has_run_live(readme):
     assert "not yet run against a live or\nstaging API" in readme or "not yet run against a live or staging API" in readme
+
+
+def test_the_cli_commands_in_the_readme_are_the_ones_that_exist(readme):
+    from libshipkore import cli
+    cli_section = section(readme, "As CLI")
+    documented = set(re.findall(r"^   libshipkore (?:--config \S+ )?([a-z]+)", cli_section, re.M))
+    assert documented == set(cli.main.commands), documented ^ set(cli.main.commands)
+    # every option shown in a README example is one the command accepts
+    for line in re.findall(r"^   libshipkore (.*)$", cli_section, re.M):
+        words = line.split()
+        command = next(w for w in words if w in cli.main.commands)
+        accepted = {opt for param in cli.main.commands[command].params for opt in param.opts}
+        used = {w for w in words if w.startswith("--") and w != "--config"}
+        assert used <= accepted, f"{command}: README uses {used - accepted}"
+    assert "--refresh" in cli_section and "LIBSHIPKORE_CONFIG" in cli_section

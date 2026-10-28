@@ -30,16 +30,32 @@ As CLI
 
    libshipkore providers
 
-To get all the supported Couriers.
+Every provider and the operations it supports, as JSON.
 
 .. code-block:: bash
 
-   libshipkore track
+   libshipkore track --provider delhivery --waybill 1234567890123
 
-To track a package in supported Couriers. It will ask for 2 things
+Where a shipment is, as JSON, with its checkpoints. Without `--provider` and `--waybill` it asks for
+them. Add `--refresh` to ask the courier again instead of using a recent stored result.
 
-- Provider (Couries)
-- Waybill (Tracking number) 
+The other commands look things up and change nothing at a provider:
+
+.. code-block:: bash
+
+   libshipkore serviceability --provider delhivery --pincode 560001
+   libshipkore services --provider delhivery
+   libshipkore rates --provider delhivery --origin-pincode 110001 --destination-pincode 560001 --weight-kg 2
+   libshipkore orders --provider delhivery --status Booked
+   libshipkore order ORD-1
+
+Give a config file (see "The config file" below) with `libshipkore --config /path/config.json <command>`
+or the `LIBSHIPKORE_CONFIG` variable. It supplies provider credentials and storage, so `serviceability`
+and `rates` can authenticate, tracking results are kept between runs, and `orders` has something to read.
+Failures print one line and exit 1, not a traceback.
+
+Booking, cancelling, pickups and failed-delivery actions are deliberately not in the CLI. They need the
+two-step approval that the MCP server enforces; see "Use it from an AI agent".
 
 As Library
 -----------
@@ -221,6 +237,10 @@ with in-memory storage and no credentials, which is enough to track.
 
 Write secrets as `${ENV_VAR}` references. An unknown key is rejected, so a typo is reported and not
 ignored, and the server warns if the file holds literal credentials and others can read it.
+
+If the config is invalid, or names an `${ENV_VAR}` that is not set, the server refuses to start and
+Claude Code shows only "failed to connect". Run `libshipkore-mcp --config /path/config.json` in a
+terminal to read the exact message.
 
 Other MCP clients
 .................

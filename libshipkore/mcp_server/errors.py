@@ -6,7 +6,6 @@ exception reaches it as a bare "Error executing tool" and is logged as a
 crash, which is right for real bugs but wrong for the failures below, so
 each expected failure is converted here with a next step in it.
 """
-import difflib
 import functools
 
 import anyio
@@ -38,11 +37,8 @@ def _capabilities(slug):
 
 
 def _unknown_provider(error):
-    known = list(list_providers())
-    name = str(error).split("'")[1] if "'" in str(error) else ""
-    close = difflib.get_close_matches(name, known, n=3)
-    hint = f" Did you mean {', '.join(close)}?" if close else ""
-    return ToolError(f"{error}.{hint} Call list_providers to see every provider.")
+    # the error already carries "Did you mean ...?" when a name is close
+    return ToolError(f"{str(error).rstrip('.')}. Call list_providers to see every provider.")
 
 
 def _unsupported(error):

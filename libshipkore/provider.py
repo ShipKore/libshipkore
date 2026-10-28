@@ -7,6 +7,8 @@ One entry point for every provider and every operation.
     provider.create_shipment(request)
     provider.label(shipment.waybill, shipment.reference)
 """
+import difflib
+
 from libshipkore.book.base import BaseCarrier, TrackOnlyCarrier, carrier_registry
 from libshipkore.common.exceptions import UnknownProvider
 from libshipkore.track import ALTERNATIVE_PROVIDERS, track_registry
@@ -24,7 +26,10 @@ def get_provider(provider: str, credentials: dict = None,
         return TrackOnlyCarrier(
             provider, credentials=credentials, sandbox=sandbox
         )
-    raise UnknownProvider(f"unknown provider '{provider}'")
+    known = set(carrier_registry.keys()) | set(track_registry.keys()) | set(ALTERNATIVE_PROVIDERS)
+    close = difflib.get_close_matches(provider, sorted(known), n=3)
+    hint = f". Did you mean {', '.join(close)}?" if close else ""
+    raise UnknownProvider(f"unknown provider '{provider}'{hint}")
 
 
 def list_providers() -> dict:

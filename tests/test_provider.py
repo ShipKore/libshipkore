@@ -38,8 +38,18 @@ def test_alias_resolves_like_track():
 
 
 def test_unknown_provider():
-    with pytest.raises(UnknownProvider):
-        get_provider("nope")
+    with pytest.raises(UnknownProvider) as error:
+        get_provider("nope-at-all")
+    assert "Did you mean" not in str(error.value)  # nothing is close
+
+
+def test_a_mistyped_provider_is_corrected_in_the_error_itself():
+    with pytest.raises(UnknownProvider, match=r"unknown provider 'delhivry'\. Did you mean delhivery\?"):
+        get_provider("delhivry")
+    with pytest.raises(UnknownProvider, match="shiprocket"):
+        get_provider("shiprockt")
+    with pytest.raises(UnknownProvider, match="globegistics"):  # aliases are offered too
+        get_provider("globegistic")
 
 
 def test_every_registered_provider_has_one_consistent_surface():
