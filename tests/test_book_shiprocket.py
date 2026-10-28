@@ -319,3 +319,32 @@ def test_label_not_created(carrier):
 def test_label_needs_the_reference(carrier):
     with pytest.raises(ValueError, match="reference"):
         carrier.label("19041211125783")
+
+
+# tracking (response shape unverified; scan fields from the webhook docs) ----
+
+@responses.activate
+def test_track_reads_the_scan_history(carrier):
+    login()
+    responses.add(responses.GET, API + "/courier/track/awb/AWB1", json={"tracking_data": {
+        "shipment_track": [{"current_status": "In Transit"}], "etd": "2026-05-04 18:00:00",
+        "shipment_track_activities": [
+            {"date": "2026-05-01 10:00:00", "status": "X-UCI", "activity": "Manifested",
+             "location": "Delhi", "sr-status-label": "MANIFEST GENERATED"},
+            {"date": "2026-05-02 09:30:00", "status": "X-ILL1F", "activity": "At hub",
+             "location": "Jaipur", "sr-status-label": "IN TRANSIT"},
+        ]}})
+    track = carrier.track("AWB1")
+    assert track.status.value == "InTransit" and track.checkpoints[0].message == "At hub"
+    assert track.checkpoints[0].checkpoint_time.isoformat() == "2026-05-02T09:30:00+05:30"
+    assert track.estimated_date.isoformat() == "2026-05-04T18:00:00+05:30"
+    assert "track" in carrier.capabilities
+
+
+@responses.activate
+def test_track_with_no_scans_is_a_provider_error(carrier):
+    login()
+    responses.add(responses.GET, API + "/courier/track/awb/AWB1",
+                  json={"tracking_data": {"track_status": 0, "error": "no data"}})
+    with pytest.raises(ProviderError, match="no data"):
+        carrier.track("AWB1")

@@ -77,3 +77,10 @@ Notes: Delhivery is the most complete direct API, covers every stage, and has a 
 - NimbusPost: base URL and endpoint payloads (endpoint pages load lazily and did not render for me).
 - Shiprocket: numeric rate limit; NDR and return request payloads (endpoints are confirmed, bodies not read).
 - DTDC, Xpressbees, Ekart, iThink pickup/NDR/webhooks, ClickPost auth, Shipway: need provider-supplied docs.
+
+## Third pass: what was readable, and what is built
+
+- **iThink v3 tracking** (docs.ithinklogistics.com/doc-track-order/3, public): `POST https://api.ithinklogistics.com/api_v3/order/track.json`, staging `https://pre-alpha.ithinklogistics.com/api_v3/...`, secrets in the body, up to 10 AWBs, full response and status table shown. Built (`book/carriers/ithink.py`, tracking only). The earlier note above says `api_v2` for staging; the v3 page shows `api_v3`. Order, rate, pincode and NDR v3 pages were not readable without an account.
+- **Shiprocket tracking**: `GET /courier/track/awb/{awb}`, path taken from Shiprocket's own MCP server source (github.com/bfrs/shiprocket-mcp). The response shape is not in the public page (Postman-rendered, sections not readable), so the parser is marked unverified. The scan fields match the documented webhook. NDR and returns: no request body seen; not built.
+- **Blue Dart** (developer.dhl.com): request bodies for Generate Waybill, Register Pickup and Cancel Pickup are readable (JWT in a `JWTToken` header, `Profile` / `profile` with `Api_type`, `LicenceKey`, `LoginID`, dates as `/Date(ms)/`). Not readable: the Authenticator endpoint, every response shape, the sandbox URL, and which waybill path is live (`/in/transportation/waybill/v1/` vs `/waybill/GenerateWayBill`). Tracking is `GET .../tracking/v1` with query parameters and `format=xml`. Not built: writing it would mean guessing auth and every response.
+

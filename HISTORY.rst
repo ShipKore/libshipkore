@@ -14,6 +14,9 @@ Breaking:
 
 Added:
 
+* iThink Logistics tracking (``ithink``, needs ``access_token`` and ``secret_key``) and Shiprocket
+  tracking by AWB. Shiprocket's response shape is unverified.
+
 * The command line runs on the ``Shipkore`` facade: ``libshipkore --config FILE`` (or ``LIBSHIPKORE_CONFIG``)
   with ``providers``, ``track`` (now with ``--refresh`` and stored results), ``serviceability``, ``services``,
   ``rates``, ``orders`` and ``order``. A bare ``libshipkore`` prints help and exits 0 on every Click version.

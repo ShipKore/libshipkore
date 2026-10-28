@@ -51,8 +51,7 @@ class BaseCarrier(BaseService):
         """Names of the operations this provider supports."""
         supported = {
             op for op in OPERATIONS
-            if op != "track"
-            and getattr(type(self), op) is not getattr(BaseCarrier, op)
+            if getattr(type(self), op) is not getattr(BaseCarrier, op)
         }
         if self.provider in track_registry.keys():
             supported.add("track")

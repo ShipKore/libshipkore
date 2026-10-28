@@ -1,6 +1,7 @@
 from datetime import datetime
 from ..base import BaseCarrier, carrier_registry
 from libshipkore.common.exceptions import ProviderError
+from libshipkore.track.models.model import StatusChoice, Track
 from ..models import (
     Cancellation,
     Label,
@@ -20,7 +21,9 @@ class Shiprocket(BaseCarrier):
     pickup and cancel follow the published docs. The response shapes of
     serviceability and AWB assignment are not in the public docs I could
     read and are marked "unverified". NDR, returns and tracking are not
-    implemented yet.
+    implemented yet. Tracking uses GET /courier/track/awb/{awb}, a path
+    taken from Shiprocket's own MCP server source; its response shape is
+    unverified.
 
     Credentials: email and password of an API user (Settings > API), plus
     optionally pickup_pincode as the default origin for serviceability.
@@ -97,6 +100,67 @@ class Shiprocket(BaseCarrier):
                 raise ValueError(f"shiprocket requires {', '.join(missing)}")
         if operation == "schedule_pickup" and len(request.shipment_ids) != 1:
             raise ValueError("shiprocket schedules one shipment per pickup")
+
+    # Shiprocket's own status labels (seen in its webhook documentation)
+    STATUS_MAPPER = {
+        "MANIFEST GENERATED": StatusChoice.InfoReceived,
+        "PICKUP SCHEDULED": StatusChoice.InfoReceived,
+        "PICKED UP": StatusChoice.InTransit,
+        "SHIPPED": StatusChoice.InTransit,
+        "IN TRANSIT": StatusChoice.InTransit,
+        "REACHED AT DESTINATION HUB": StatusChoice.InTransit,
+        "OUT FOR DELIVERY": StatusChoice.OutForDelivery,
+        "DELIVERED": StatusChoice.Delivered,
+        "UNDELIVERED": StatusChoice.AttemptFail,
+        "RTO INITIATED": StatusChoice.ReverseInTransit,
+        "RTO IN TRANSIT": StatusChoice.ReverseInTransit,
+        "RTO OFD": StatusChoice.ReverseOutForDelivery,
+        "RTO DELIVERED": StatusChoice.ReverseDelivered,
+    }
+
+    def track(self, waybill):
+        """
+        Scan history for an AWB. Unverified: the response is read as
+        {"tracking_data": {"shipment_track": [{"current_status"}],
+        "shipment_track_activities": [{"date", "activity", "location",
+        "sr-status-label"}], "etd"}}; the scan fields match Shiprocket's
+        documented webhook. Times are taken as Indian Standard Time.
+        """
+        data = self._request("GET", f"/courier/track/awb/{waybill}")
+        tracking = data.get("tracking_data") or {}
+        scans = tracking.get("shipment_track_activities")
+        if not scans:
+            raise ProviderError(
+                self.provider,
+                tracking.get("error") or f"no tracking data for {waybill}",
+                body=data,
+            )
+        checkpoints = []
+        for scan in scans:
+            label = str(scan.get("sr-status-label") or "").upper()
+            checkpoints.append({
+                "slug": self.provider,
+                "location": scan.get("location"),
+                "city": scan.get("location"),
+                "country_name": "India",
+                "country_iso3": "IND",
+                "message": scan.get("activity"),
+                "substatus": scan.get("status"),
+                "status": self.STATUS_MAPPER.get(label, StatusChoice.Exception),
+                "checkpoint_time": f"{scan['date']}+05:30".replace(" ", "T"),
+            })
+        checkpoints.sort(key=lambda c: c["checkpoint_time"], reverse=True)
+        current = ((tracking.get("shipment_track") or [{}])[0]
+                   .get("current_status") or "")
+        etd = tracking.get("etd")
+        return Track(
+            waybill=waybill,
+            provider=self.provider,
+            status=self.STATUS_MAPPER.get(current.upper(), checkpoints[0]["status"]),
+            substatus=current or None,
+            estimated_date=f"{etd}+05:30".replace(" ", "T") if etd else None,
+            checkpoints=checkpoints,
+        )
 
     def _couriers(self, origin, destination, weight_kg, cod):
         # unverified: response shape of the serviceability endpoint

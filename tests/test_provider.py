@@ -20,7 +20,7 @@ def test_capabilities_reflect_what_is_implemented():
     shiprocket = get_provider("shiprocket")
     assert shiprocket.capabilities == {
         "serviceability", "rates", "create_shipment", "label", "cancel",
-        "schedule_pickup",
+        "schedule_pickup", "track",
     }
 
 

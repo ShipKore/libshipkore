@@ -163,12 +163,6 @@ def test_the_courier_count_is_true():
     assert claimed == len(list(track_registry.keys()))
 
 
-def test_the_known_failing_test_is_named_correctly():
-    name = re.search(r"`(test_\w+)` in `(tests/\S+)`", text_of("AGENTS.md"))
-    with open(os.path.join(ROOT, name.group(2))) as handle:
-        assert f"def {name.group(1)}(" in handle.read()
-
-
 def test_every_file_that_holds_the_version_holds_this_one():
     # AGENTS.md lists them; if one drifts, a release ships with two versions
     holders = ["pyproject.toml", "setup.py", "libshipkore/__init__.py", "setup.cfg",

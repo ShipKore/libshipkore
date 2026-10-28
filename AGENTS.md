@@ -1,6 +1,6 @@
 # libshipkore: notes for coding agents
 
-A Python library that tracks parcels with 38 couriers (scrapers) and books, labels, cancels and manages orders with a growing set of carriers (Delhivery and Shiprocket so far), behind one interface. It also ships an MCP server and a Claude Code plugin so AI agents can use it.
+A Python library that tracks parcels with 38 couriers (scrapers) and books, labels, cancels and manages orders with a growing set of carriers (Delhivery and Shiprocket so far, plus iThink tracking), behind one interface. It also ships an MCP server and a Claude Code plugin so AI agents can use it.
 
 Python >= 3.10 and pydantic 2 only. The working language of the repo is English; the main users are in India.
 
@@ -16,7 +16,6 @@ claude plugin validate plugin && claude plugin validate .  # if the claude CLI i
 
 - Nothing needs setuptools: `libshipkore/common/registry.py` replaced the unmaintained `class-registry` package, whose `pkg_resources` import broke `import libshipkore` on Python 3.12 and later. A test imports the library with `pkg_resources` blocked.
 - The MCP and HTTP tests start real server processes on free local ports; they need no network.
-- **One test fails today and is not your doing:** `test_command_line_interface` in `tests/test_libshipkore.py` (the CLI exits 2 when run with no arguments under the installed Click 8). Any other failure is yours.
 - Run the suite on more than one Python (3.10 and 3.13 are the edges) before calling work done.
 
 ## Map
@@ -52,4 +51,4 @@ claude plugin validate plugin && claude plugin validate .  # if the claude CLI i
 
 ## Not done yet
 
-Shiprocket NDR, returns and tracking; Blue Dart, DTDC, Xpressbees, Ekart and the other carriers in the matrix; recorded (non-hand-written) fixtures; the CLI (`libshipkore/cli.py`) is read-only on purpose and has no booking commands; only the Delhivery and Ekart trackers have tests.
+Shiprocket NDR and returns (request bodies not readable without an account); Blue Dart (auth endpoint and every response shape unreadable; see the matrix); iThink orders, rates and NDR; DTDC, Xpressbees, Ekart and the other carriers in the matrix; recorded (non-hand-written) fixtures; the CLI (`libshipkore/cli.py`) is read-only on purpose and has no booking commands; only the Delhivery and Ekart trackers have tests.
