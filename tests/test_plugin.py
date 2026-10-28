@@ -23,6 +23,7 @@ import libshipkore  # noqa: E402
 from libshipkore.book.base import OPERATIONS  # noqa: E402
 from libshipkore.files import S3FileStore  # noqa: E402
 from libshipkore.mcp_server.config import ALLOWED_KEYS  # noqa: E402
+from tests.skillmd import check_frontmatter, parse  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PLUGIN = os.path.join(ROOT, "plugin")
@@ -30,12 +31,6 @@ SKILLS = os.path.join(PLUGIN, "skills")
 EXPECTED_SKILLS = {"track-shipment", "ship-order", "handle-ndr", "setup-libshipkore"}
 # tools that change something at a provider and so take two calls
 TWO_STEP = {"create_order", "cancel_order", "schedule_pickup", "ndr_action"}
-KNOWN_FRONTMATTER = {
-    "name", "description", "when_to_use", "argument-hint", "disable-model-invocation",
-    "user-invocable", "allowed-tools", "model", "effort", "context", "agent", "metadata",
-}
-LISTING_LIMIT = 1536  # description + when_to_use are cut off beyond this in the skill list
-BODY_LIMIT = 500
 
 
 def read_json(*parts):
@@ -45,14 +40,6 @@ def read_json(*parts):
 
 def skill_files():
     return {name: os.path.join(SKILLS, name, "SKILL.md") for name in sorted(os.listdir(SKILLS))}
-
-
-def parse(path):
-    with open(path) as handle:
-        text = handle.read()
-    match = re.match(r"---\n(.*?)\n---\n(.*)", text, re.S)
-    assert match, f"{path} has no frontmatter"
-    return yaml.safe_load(match.group(1)), match.group(2)
 
 
 # the package ---------------------------------------------------------------
@@ -111,14 +98,7 @@ def test_frontmatter_is_valid_yaml_a_reader_can_use(name):
     # invalid YAML makes Claude Code load the skill with every field dropped,
     # so the skill would have no description and never be chosen
     meta, body = parse(skill_files()[name])
-    assert isinstance(meta, dict), "frontmatter did not parse to a mapping"
-    assert isinstance(meta["description"], str) and len(meta["description"]) > 40
-    assert isinstance(meta.get("when_to_use", ""), str)
-    assert set(meta) <= KNOWN_FRONTMATTER, set(meta) - KNOWN_FRONTMATTER
-    assert meta.get("name", name) == name
-    listing = len(meta["description"]) + len(meta.get("when_to_use", ""))
-    assert listing <= LISTING_LIMIT, listing
-    assert len(body.splitlines()) <= BODY_LIMIT
+    check_frontmatter(meta, body, name)
 
 
 def test_skills_that_book_or_change_things_are_only_run_when_asked_for():
