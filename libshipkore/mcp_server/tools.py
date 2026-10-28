@@ -1,4 +1,5 @@
 from datetime import date, time
+from importlib.resources import files
 from typing import Annotated, Literal
 
 from mcp.server.mcpserver import Context
@@ -552,6 +553,12 @@ def register_resources(mcp, kore):
     def providers_resource() -> str:
         import json
         return json.dumps(provider_capabilities(), indent=2)
+
+    @mcp.resource("shipkore://capability-matrix", mime_type="text/markdown",
+                  title="What is known about each provider's API")
+    def capability_matrix_resource() -> str:
+        """Per provider: auth, sandbox, and which operations exist, with how sure we are (Y, Y*, ?)."""
+        return files("libshipkore").joinpath("data", "provider-capability-matrix.md").read_text()
 
     @mcp.resource("shipkore://orders/{order_id}", mime_type="application/json",
                   title="A stored order")

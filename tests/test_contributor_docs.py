@@ -30,11 +30,12 @@ EXPECTED = {"add-carrier", "add-tracker"}
 FILES = {
     "AGENTS.md": os.path.join(ROOT, "AGENTS.md"),
     "CLAUDE.md": os.path.join(ROOT, "CLAUDE.md"),
+    "RELEASING.md": os.path.join(ROOT, "RELEASING.md"),
     **{name: os.path.join(SKILLS, name, "SKILL.md") for name in sorted(EXPECTED)},
 }
 PATH_PREFIXES = ("libshipkore/", "tests/", "docs/", "plugin/", ".claude/", ".claude-plugin/")
 # files at the repository root that a doc may name
-ROOT_FILES = re.compile(r"[A-Za-z0-9_.-]+\.(?:toml|py|cfg|lock|ini|json|rst|md)")
+ROOT_FILES = re.compile(r"[A-Za-z0-9_.-]+\.(?:toml|py|cfg|lock|ini|json|rst|md)|Makefile")
 # words in backticks that look like code names but are not ours
 NOT_OURS = {"pkg_resources"}
 
@@ -127,7 +128,7 @@ def test_every_class_function_and_constant_a_doc_names_exists(name):
         for word in re.findall(r"[A-Za-z_][A-Za-z0-9_]*", token):
             if CODE_NAME.fullmatch(word) and word not in NOT_OURS:
                 names.add(word)
-    assert len(names) > 5 or name == "CLAUDE.md", f"{name}: the pattern has drifted"
+    assert len(names) > 5 or name in {"CLAUDE.md", "RELEASING.md"}, f"{name}: the pattern has drifted"
     missing = sorted(n for n in names if not re.search(rf"\b{re.escape(n)}\b", code))
     assert not missing, f"{name} names things that are not in the code: {missing}"
 
@@ -175,6 +176,28 @@ def test_every_file_that_holds_the_version_holds_this_one():
         assert holder in text_of("AGENTS.md").replace("`", ""), holder
         with open(os.path.join(ROOT, holder)) as handle:
             assert libshipkore.__version__ in handle.read(), holder
+
+
+def test_bump2version_is_told_about_every_file_that_holds_the_version():
+    config = configparser.ConfigParser()
+    config.read(os.path.join(ROOT, "setup.cfg"))
+    bumped = {s.split(":", 2)[2] for s in config.sections() if s.startswith("bumpversion:file:")}
+    holders = {"pyproject.toml", "setup.py", "libshipkore/__init__.py",
+               "plugin/.claude-plugin/plugin.json"}  # setup.cfg itself is updated by bump2version
+    assert bumped == holders
+    assert config["bumpversion"]["current_version"] == libshipkore.__version__
+
+
+@pytest.mark.skipif(shutil.which("bump2version") is None, reason="bump2version is not installed")
+def test_bump2version_can_actually_find_the_version_in_every_file():
+    # a dry run writes nothing; it fails if a search pattern does not match its file
+    result = subprocess.run(
+        ["bump2version", "--dry-run", "--verbose", "--allow-dirty", "patch"],
+        cwd=ROOT, text=True, capture_output=True, timeout=120,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "New version will be" in result.stderr + result.stdout
+    assert "VersionNotFoundException" not in result.stderr + result.stdout
 
 
 @pytest.mark.skipif(shutil.which("git") is None, reason="git is not installed")

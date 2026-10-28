@@ -12,7 +12,7 @@ DEFAULT_PORT = 8765
 TOKEN_ENV = "LIBSHIPKORE_MCP_TOKEN"
 
 
-def parse_args(argv=None):
+def build_parser():
     parser = argparse.ArgumentParser(
         prog="libshipkore-mcp",
         description="MCP server for libshipkore (shipping tools for AI agents).",
@@ -51,7 +51,11 @@ def parse_args(argv=None):
         "--confirm-ttl", type=int, default=600, metavar="SECONDS",
         help="How long a confirmation token stays valid (default 600).",
     )
-    return parser.parse_args(argv)
+    return parser
+
+
+def parse_args(argv=None):
+    return build_parser().parse_args(argv)
 
 
 def announce_http(host, port, token, generated, no_auth):

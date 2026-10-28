@@ -17,15 +17,21 @@ Added:
 * Booking for Delhivery and Shiprocket: serviceability, rates, create, label, cancel, pickup
   and (Delhivery) NDR, through one interface: ``get_provider``.
 * ``Shipkore`` facade for tracking, orders, labels, products and service types.
-* An MCP server (``libshipkore-mcp``, extra ``libshipkore[mcp]``) with 19 tools over stdio or
-  local HTTP, and a Claude Code plugin with skills for tracking, shipping, failed deliveries and
-  setup. Tools that change something at a provider use preview-then-confirm.
+* An MCP server (``libshipkore-mcp``, extra ``libshipkore[mcp]``) with 19 tools, provider, order,
+  product and capability-matrix resources, over stdio or local HTTP (loopback only, bearer token
+  required). Tools that change something at a provider use preview-then-confirm.
+* A Claude Code plugin and marketplace with four skills (track, ship an order, handle failed
+  deliveries, set up), and ``AGENTS.md`` plus contributor skills for adding carriers and trackers.
 * Configurable storage (memory, SQLite, SQLAlchemy, custom) and an S3-compatible file store
   for label PDFs.
 
 Fixed:
 
 * The ``globegistics`` alias pointed at a tracker that does not exist.
+* ``bump2version`` could not run: its search patterns used single quotes while the files use double
+  quotes, and the plugin manifest was not listed.
+* The ``libshipkore`` command was missing from wheels built by Poetry; it is now declared in
+  ``pyproject.toml``.
 
 0.4.2 (2022-03-03)
 ------------------

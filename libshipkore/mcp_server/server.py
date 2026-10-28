@@ -24,6 +24,8 @@ Rules:
   changes nothing and returns a preview with a token. Show the preview, with its
   warnings, to the user and wait for approval. Then repeat the call with exactly
   the same arguments plus the token. Never invent a user's approval.
+- shipkore://capability-matrix says what each provider's API supports and how sure
+  we are of it; read it when unsure whether a provider can do something.
 - Dates are ISO 8601. Money is in the provider's currency, usually INR.
 - A tool error explains what to change; read it before retrying.
 """

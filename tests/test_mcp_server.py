@@ -299,7 +299,7 @@ async def test_a_real_bug_is_not_leaked_to_the_model(client, monkeypatch):
 async def test_resources(client, kore):
     book(kore)
     uris = {str(r.uri) for r in (await client.list_resources()).resources}
-    assert "shipkore://providers" in uris
+    assert {"shipkore://providers", "shipkore://capability-matrix"} <= uris
     templates = {t.uri_template for t in (await client.list_resource_templates()).resource_templates}
     assert {"shipkore://orders/{order_id}", "shipkore://products/{sku}"} <= templates
 
@@ -309,6 +309,17 @@ async def test_resources(client, kore):
     assert order["waybill"] == "1234567890123"
     product = json.loads((await client.read_resource("shipkore://products/TEE")).contents[0].text)
     assert product["name"] == "T-shirt"
+
+
+async def test_the_capability_matrix_is_served_from_the_package(client):
+    from importlib.resources import files
+    shipped = files("libshipkore").joinpath("data", "provider-capability-matrix.md").read_text()
+    result = await client.read_resource("shipkore://capability-matrix")
+    served = result.contents[0]
+    assert served.text == shipped and served.mime_type == "text/markdown"
+    for expected in ("Delhivery", "Shiprocket", "Y\\*", "Remaining unverified"):
+        assert expected in served.text, expected
+    assert not os.path.exists(os.path.join(ROOT, "docs", "provider-capability-matrix.md"))
 
 
 async def test_a_missing_resource_is_an_error(client):

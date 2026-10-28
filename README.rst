@@ -2,8 +2,13 @@
 libshipkore
 ===========
 
-Shipkore tracking library & CLI to track packages across couriers. 
-This is first Open source product of Innerkore Technologies. We are commited to do things differently. 
+Shipkore: one Python interface to track parcels with 38 couriers and to book, label, cancel and manage
+shipments with Indian and global carriers, plus an MCP server and a Claude Code plugin so AI agents can
+use it safely. This is first Open source product of Innerkore Technologies. We are commited to do things differently.
+
+Status: tracking is the mature part. Booking exists for Delhivery and Shiprocket and has been written
+from their documentation and tested against mocked responses, but **not yet run against a live or
+staging API**. See `What works today`_ below.
 
 
 Installation
@@ -70,7 +75,7 @@ Ask `capabilities` before calling; an operation a provider lacks raises `Unsuppo
    delhivery.track(shipment.waybill)
 
 Booking is implemented for Delhivery and Shiprocket so far, and neither has been
-exercised against a live API yet. See `docs/provider-capability-matrix.md`.
+exercised against a live API yet. See `libshipkore/data/provider-capability-matrix.md`.
 
 The simple way in: `Shipkore`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -135,35 +140,151 @@ provider's own link is kept until it expires; Delhivery's lasts 24 hours.
 Use it from an AI agent
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-libshipkore ships an MCP server (`libshipkore-mcp`) and a Claude Code plugin with skills for
-tracking, shipping an order, handling failed deliveries and setup.
+Install the Claude Code plugin: it bundles the MCP server and four skills.
 
 .. code-block:: bash
 
    claude plugin marketplace add ShipKore/libshipkore
    claude plugin install libshipkore@shipkore
 
-The plugin starts the server with `uvx` (so it needs `uv`), and until 0.5.0 is released on PyPI
-it installs from GitHub. Tracking works with no setup. To book shipments, run the
-`setup-libshipkore` skill: it helps you write a config file with your courier credentials as
-`${ENV_VAR}` references, so no secret goes through the chat.
+The plugin starts the server with `uvx` (so it needs `uv`), and until 0.5.0 is released on PyPI it
+installs from GitHub. Tracking works with no setup. To book shipments, run the `setup-libshipkore`
+skill: it helps you write a config file with your courier credentials as `${ENV_VAR}` references,
+so no secret goes through the chat.
 
-Any other MCP client can run the server directly:
+The skills are `/libshipkore:track-shipment` and `/libshipkore:setup-libshipkore`, which Claude also
+uses on its own when relevant, and `/libshipkore:ship-order` and `/libshipkore:handle-ndr`, which
+book or change things and so run only when you invoke them.
+
+What the server offers
+......................
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Kind
+     - Tools
+   * - Look things up (change nothing)
+     - `list_providers`, `check_serviceability`, `list_service_types`, `get_rates`, `track_shipment`,
+       `get_order`, `list_orders`, `list_products`, `get_product`, `get_recorded_responses`
+   * - Refresh and keep a result (safe to repeat)
+     - `track_order`, `ndr_status`, `get_label`
+   * - Edit the product catalog
+     - `save_product` (refuses to replace unless asked), `delete_product`
+   * - Change something at a provider (two calls each)
+     - `create_order`, `cancel_order`, `schedule_pickup`, `ndr_action`
+
+It also serves resources: `shipkore://providers`, `shipkore://orders/{order_id}`,
+`shipkore://products/{sku}` and `shipkore://capability-matrix` (what each provider's API supports,
+and how sure we are).
+
+The config file
+...............
+
+A JSON file, passed with `--config` or the `LIBSHIPKORE_CONFIG` variable. With none, the server runs
+with in-memory storage and no credentials, which is enough to track.
+
+.. code-block:: json
+
+   {
+     "providers": {
+       "delhivery": {"credentials": {"api_token": "${DELHIVERY_TOKEN}"}, "sandbox": true},
+       "shiprocket": {"credentials": {"email": "${SR_EMAIL}", "password": "${SR_PASSWORD}"}}
+     },
+     "storage": "sqlite:////var/lib/shipkore/kore.db",
+     "files": "s3://my-label-bucket/labels"
+   }
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 75
+
+   * - Key
+     - Meaning
+   * - `providers`
+     - Per provider: `credentials` and `sandbox`. A provider you do not list can still be tracked.
+   * - `sandbox`
+     - Default for providers that do not say. Shiprocket has no sandbox.
+   * - `storage`
+     - Orders, products, tracking and the audit trail: `memory://`, `sqlite:///path`, or any
+       SQLAlchemy URL. Also read from `LIBSHIPKORE_STORAGE`.
+   * - `files`
+     - Where label PDFs go, kept apart from the database, in any S3-compatible store. Also read
+       from `LIBSHIPKORE_FILES`.
+   * - `track_ttl`
+     - Seconds a stored tracking result is served before asking the courier again (default 300).
+   * - `label_url_expiry`
+     - Seconds a download link to a stored label stays valid (default 3600).
+   * - `record_responses`
+     - Keep every raw provider reply as an audit trail (default true).
+
+Write secrets as `${ENV_VAR}` references. An unknown key is rejected, so a typo is reported and not
+ignored, and the server warns if the file holds literal credentials and others can read it.
+
+Other MCP clients
+.................
 
 .. code-block:: bash
 
    pip install "libshipkore[mcp]"
-   libshipkore-mcp --config /path/config.json              # stdio, started by the client
-   libshipkore-mcp --transport http --config /path/config.json   # http://127.0.0.1:8765/mcp, local only
+   claude mcp add libshipkore -e LIBSHIPKORE_CONFIG=/path/config.json -- libshipkore-mcp
 
-Tools that book, cancel, schedule pickups or act on failed deliveries take two calls: a preview that
-changes nothing, then a confirmation with a single-use token bound to the exact arguments. That is
-a checkpoint, not proof a person approved, so the agent is told to show the preview and wait for a
-real yes, and the client can ask you directly where it supports it. The HTTP transport listens on
-the local machine only and requires a bearer token (`LIBSHIPKORE_MCP_TOKEN`, or one is generated).
+or over local HTTP:
+
+.. code-block:: bash
+
+   export LIBSHIPKORE_MCP_TOKEN=$(openssl rand -hex 24)
+   libshipkore-mcp --transport http --config /path/config.json
+   claude mcp add --transport http libshipkore http://127.0.0.1:8765/mcp --header "Authorization: Bearer $LIBSHIPKORE_MCP_TOKEN"
+
+Options: `--transport`, `--host`, `--port`, `--no-auth`, `--no-elicit`, `--confirm-ttl`.
+
+How writes stay safe
+....................
+
+- **Two calls, not one.** A tool that books, cancels, schedules a pickup or acts on a failed delivery
+  first returns a preview and a token and changes nothing. The same call with the same arguments and
+  the token performs it. The token is bound to a hash of those exact arguments, works once, expires
+  after ten minutes and is stored only as a hash. A preview makes no call to the provider.
+- **This is a checkpoint, not proof a person approved.** An agent can call twice in a row. The skills
+  tell it to show the preview and wait for a real yes, the client's own permission prompt applies,
+  and where the client supports it the server also asks you directly. On the newest MCP protocol
+  version a server cannot ask mid-call, so there the token alone gates the action.
+- **Credentials never travel through tools.** They come from the config file or the environment.
+- **HTTP is local only.** It refuses any address that is not loopback or localhost, checks the Host and
+  Origin headers so a web page cannot reach it, and requires a bearer token so other users on the
+  same machine cannot use your credentials (`LIBSHIPKORE_MCP_TOKEN`, at least 16 characters, or one is
+  generated and printed to stderr). `--no-auth` turns the token off and says so loudly.
+- **Everything is recorded.** The raw provider replies are kept per order and can be read with
+  `get_recorded_responses`.
+
+What works today
+................
+
+.. list-table::
+   :header-rows: 1
+   :widths: 18 52 30
+
+   * - Provider
+     - Operations
+     - Evidence
+   * - Delhivery
+     - serviceability, service types, rates, book (forward and reverse), label, cancel, pickup, NDR
+     - Written from its developer-portal docs; not run against staging
+   * - Shiprocket
+     - serviceability, rates, book, label, cancel, pickup
+     - Login, order, pickup and cancel from its docs; serviceability and AWB shapes are reconstructed; no sandbox
+   * - 38 couriers
+     - tracking only
+     - Scrapers and APIs; only Delhivery's and Ekart's have tests
+
+The research behind this is `libshipkore/data/provider-capability-matrix.md`, which is also served by the
+MCP server. Shiprocket NDR, returns and tracking are not implemented, and the other carriers in the
+matrix are not started.
 
 As Code (like cloning this Repo)
------------
+--------------------------------
 
 Install `poetry` first. Then, to install dependencies,
 
@@ -183,6 +304,8 @@ Features
 
 - Tracking through CLI
 - Embeddable as library
+- One interface for tracking and booking (`get_provider`) and a `Shipkore` facade with pluggable storage
+- An MCP server and a Claude Code plugin for AI agents, with approval-gated writes
 - Give standard response
 - Convert Courier's statuses to standard statuses
 - Convert date & time to timezone specific ISO Format

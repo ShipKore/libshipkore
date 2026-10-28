@@ -14,7 +14,7 @@ The rule that governs everything below: **never write an API shape you have not 
 
 ## 1. Research from official sources
 
-Start with `docs/provider-capability-matrix.md`; it may already hold what is known. Then read the provider's own documentation, not blogs.
+Start with `libshipkore/data/provider-capability-matrix.md`; it may already hold what is known. Then read the provider's own documentation, not blogs.
 
 - Many docs sites render in JavaScript, so a plain fetch returns only navigation. Open them in the browser and read the page. Postman-hosted docs expand per folder.
 - If the provider publishes an MCP server or an OpenAPI file, use it. Delhivery's MCP returned full specs, and it also corrected several things first read from an older mirror.
@@ -70,7 +70,7 @@ For the parts that matter (the auth header, request-body construction, error pre
 
 ## 6. Everywhere the provider is named
 
-- `docs/provider-capability-matrix.md`: fill the provider's cells with Y (read on an official page), Y\* (third party only) or ? (unknown), and note what is unverified.
+- `libshipkore/data/provider-capability-matrix.md`: fill the provider's cells with Y (read on an official page), Y\* (third party only) or ? (unknown), and note what is unverified.
 - `libshipkore/mcp_server/tools.py`: add to `NOTES` any caveat the person approving a booking, cancel, pickup or NDR should see (a provider quirk, no sandbox).
 - `plugin/skills/ship-order/SKILL.md` ("Provider notes") and `plugin/skills/setup-libshipkore/SKILL.md` (credentials and sandbox). `tests/test_plugin.py` will fail if a skill names something that no longer exists, but it cannot tell you a note is missing.
 - `HISTORY.rst`, and `README.rst` if the supported list is mentioned.
