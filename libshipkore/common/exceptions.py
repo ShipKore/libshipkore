@@ -6,6 +6,18 @@ class CredentialsError(ShipkoreError):
     """A required credential was not supplied."""
 
 
+class StorageError(ShipkoreError):
+    """The database or file storage failed or is misconfigured."""
+
+
+class NotFound(ShipkoreError):
+    """An order, product or stored file does not exist."""
+
+
+class DuplicateOrder(ShipkoreError):
+    """An order with this id was already booked."""
+
+
 class UnknownProvider(ShipkoreError):
     """No tracker or carrier is registered under this name."""
 

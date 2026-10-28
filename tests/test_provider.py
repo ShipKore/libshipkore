@@ -11,8 +11,8 @@ from libshipkore.provider import get_provider, list_providers
 def test_booking_carrier_exposes_every_operation_it_implements():
     delhivery = get_provider("delhivery", credentials={"api_token": "t"})
     assert delhivery.capabilities == {
-        "track", "serviceability", "rates", "create_shipment", "label",
-        "cancel", "schedule_pickup", "ndr_action", "ndr_status",
+        "track", "serviceability", "services", "rates", "create_shipment",
+        "label", "cancel", "schedule_pickup", "ndr_action", "ndr_status",
     }
 
 
@@ -56,6 +56,7 @@ def test_every_registered_provider_has_one_consistent_surface():
 MINIMAL_ARGS = {
     "track": ("1",),
     "serviceability": ("1",),
+    "services": (),
     "rates": ("1", "2", None, None),
     "create_shipment": (None,),
     "label": ("1",),

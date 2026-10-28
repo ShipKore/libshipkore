@@ -12,6 +12,7 @@ from ..models import (
     Rate,
     RequestStatus,
     ServiceabilityResult,
+    ServiceType,
     Shipment,
 )
 
@@ -70,6 +71,15 @@ class Delhivery(BaseCarrier):
             pickup=flag("pickup"),
             remark=remark or None,
         )
+
+    def services(self):
+        # the billing modes the charges API accepts (md = E or S)
+        return [
+            ServiceType(provider=self.provider, code="E", name="Express",
+                        mode="Express"),
+            ServiceType(provider=self.provider, code="S", name="Surface",
+                        mode="Surface"),
+        ]
 
     def rates(self, origin_pincode, destination_pincode, parcel,
               payment_mode, cod_amount=0, mode="E"):

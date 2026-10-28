@@ -1,3 +1,4 @@
+import logging
 import requests
 from class_registry import ClassRegistry
 from libshipkore.common.baseservice import BaseService
@@ -5,10 +6,12 @@ from libshipkore.common.exceptions import ProviderError, UnsupportedOperation
 from libshipkore.track import get_track_data, track_registry
 
 carrier_registry = ClassRegistry()
+logger = logging.getLogger(__name__)
 
 OPERATIONS = (
     "track",
     "serviceability",
+    "services",
     "rates",
     "create_shipment",
     "label",
@@ -39,6 +42,9 @@ class BaseCarrier(BaseService):
         self.sandbox = sandbox
         self.session = session or requests.Session()
         self.timeout = timeout
+        # called with (provider, method, path, status_code, body) after
+        # every API call, for audit logging; failures here never propagate
+        self.recorder = None
 
     @property
     def capabilities(self):
@@ -72,6 +78,7 @@ class BaseCarrier(BaseService):
             timeout=self.timeout,
             **kwargs,
         )
+        self._record(method, path, response)
         if not response.ok:
             raise ProviderError(
                 self.provider,
@@ -91,6 +98,16 @@ class BaseCarrier(BaseService):
                 body=response.text,
             )
 
+    def _record(self, method, path, response):
+        if self.recorder is None:
+            return
+        try:
+            self.recorder(
+                self.provider, method, path, response.status_code, response.text
+            )
+        except Exception:
+            logger.exception("response recorder failed")
+
     def _unsupported(self, operation):
         raise UnsupportedOperation(f"{self.provider}: {operation}")
 
@@ -103,6 +120,10 @@ class BaseCarrier(BaseService):
     def serviceability(self, pincode, origin_pincode=None):
         """origin_pincode is for carriers that price or gate by lane."""
         self._unsupported("serviceability")
+
+    def services(self):
+        """The service levels (Express, Surface...) this provider offers."""
+        self._unsupported("services")
 
     def rates(self, origin_pincode, destination_pincode, parcel,
               payment_mode, cod_amount=0):

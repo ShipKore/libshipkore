@@ -47,6 +47,12 @@ setup(
         ],
     },
     install_requires=requirements,
+    extras_require={
+        # SQLAlchemyStorage: Postgres, MySQL and other SQL databases
+        "sql": ["sqlalchemy>=1.4"],
+        # S3FileStore: AWS S3, MinIO, R2, Spaces and other S3-compatible stores
+        "s3": ["boto3>=1.26"],
+    },
     long_description=readme + "\n\n" + history,
     include_package_data=True,
     keywords="libshipkore",

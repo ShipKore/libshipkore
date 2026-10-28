@@ -70,6 +70,65 @@ Ask `capabilities` before calling; an operation a provider lacks raises `Unsuppo
 Booking is implemented for Delhivery and Shiprocket so far, and neither has been
 exercised against a live API yet. See `docs/provider-capability-matrix.md`.
 
+The simple way in: `Shipkore`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+`Shipkore` is one client for tracking, orders, labels, products and service types.
+It picks the provider, keeps your data in a storage layer you configure, and keeps
+label PDFs in a separate S3-compatible file store.
+
+.. code-block:: python
+
+   from libshipkore.client import Shipkore
+   from libshipkore.book.models import Address, Product
+
+   shipkore = Shipkore(
+       providers={"delhivery": {"credentials": {"api_token": "..."}, "sandbox": True}},
+       storage="sqlite:///shipkore.db",
+       files="s3://my-label-bucket/labels",
+   )
+
+   shipkore.save_product(Product(sku="TEE", name="T-shirt", price=499, weight_kg=0.3))
+   order = shipkore.create_order(
+       "delhivery", "ORD-1", Address(name="Asha", phone="9876543210", address="12 MG Road",
+                                     pincode="560001", city="Bengaluru", state="Karnataka"),
+       pickup_location="Main Warehouse", items=[{"sku": "TEE", "quantity": 2}],
+   )
+   shipkore.label("ORD-1")          # PDF copied to the file store, returns a download link
+   shipkore.track_order("ORD-1")    # served from storage while recent
+   shipkore.cancel_order("ORD-1")
+   shipkore.services("delhivery")   # Express, Surface
+
+Items refer to catalog products by sku, which fill in the declared value, parcel weight and
+description unless you pass them. A failed booking is stored with its error and can be retried
+under the same order id; a booked order cannot be created twice. Every raw provider response is
+kept in the `responses` collection as an audit trail (`shipkore.responses(order_id="ORD-1")`);
+pass `record_responses=False` to turn that off.
+
+**Storage** (`storage=`) holds orders, products, tracking results, label records and raw
+responses as JSON documents. It accepts:
+
+- `"memory://"`, the default, for tests and scripts
+- `"sqlite:///shipkore.db"`, a file with no extra dependency
+- any SQLAlchemy URL such as `"postgresql://user:pw@host/db"` (`pip install libshipkore[sql]`)
+- `{"backend": "pkg.module.MyStorage", ...}` or a `Storage` instance, for Redis, Mongo, Firebase
+  and so on: subclass `libshipkore.storage.Storage` and implement `put`, `get`, `delete`, `list`
+
+If `storage` is not given, the `LIBSHIPKORE_STORAGE` environment variable is used. SQL backends
+filter in Python after reading a collection, which suits thousands of orders, not millions.
+
+**File storage** (`files=`) holds label PDFs and is separate from the database. It is S3
+compatible: AWS S3, MinIO, Cloudflare R2, DigitalOcean Spaces (`pip install libshipkore[s3]`).
+
+.. code-block:: python
+
+   files="s3://bucket/prefix"                          # AWS credentials from the usual chain
+   files={"backend": "s3", "bucket": "labels", "endpoint_url": "https://minio.internal:9000",
+          "access_key": "...", "secret_key": "..."}
+
+If `files` is not given (or `LIBSHIPKORE_FILES` is unset), labels are not copied and the
+provider's own link is kept until it expires; Delhivery's lasts 24 hours.
+
 
 As Code (like cloning this Repo)
 -----------
