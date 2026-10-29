@@ -198,3 +198,73 @@ def test_an_unreadable_estimate_loses_the_estimate_not_the_scans():
     tracker.raw_data = {"data": {**BODY["data"], "etd": "soon"}}
     tracker.transform()
     assert tracker.data.estimated_date is None and len(tracker.data.checkpoints) == 3
+
+
+# the profiles: website, contacts, categories, countries, service areas ------
+
+def raw_entries():
+    import os
+    path = os.path.join(os.path.dirname(__file__), "..", "libshipkore", "data", "carriers.json")
+    with open(path) as handle:
+        return json.load(handle)
+
+
+def test_every_directory_entry_is_valid_and_every_fact_has_a_source():
+    from libshipkore.directory import Carrier
+    for raw in raw_entries():
+        carrier = Carrier(**raw)
+        if carrier.website or carrier.phones or carrier.emails or carrier.countries:
+            assert carrier.profile and carrier.profile.sources, carrier.slug
+            assert carrier.profile.verified_on.year >= 2026, carrier.slug
+
+
+@pytest.mark.parametrize("change,message", [
+    ({"website": "http://x.test"}, "https"),
+    ({"categories": ["fast"]}, "unknown categories"),
+    ({"countries": {"primary": ["india"]}}, "two capital letters"),
+    ({"country": "India"}, "two capital letters"),
+    ({"emails": [{"address": "nobody", "label": "x"}]}, "not an email"),
+    ({"phones": [{"number": "call us", "label": "x"}]}, "not a phone"),
+    ({"profile": {"sources": ["http://x.test"], "verified_on": "2026-01-01"}}, "https"),
+    ({"surprise": 1}, "surprise"),
+])
+def test_a_bad_profile_is_refused(change, message):
+    from libshipkore.directory import Carrier
+    base = {"slug": "x", "name": "X", "website": "https://x.test",
+            "profile": {"sources": ["https://x.test/"], "verified_on": "2026-01-01"}}
+    with pytest.raises(Exception, match=message):
+        Carrier(**{**base, **change})
+
+
+def test_facts_without_a_source_are_refused():
+    from libshipkore.directory import Carrier
+    with pytest.raises(Exception, match="need profile.sources"):
+        Carrier(slug="x", name="X", website="https://x.test")
+    Carrier(slug="x", name="X")  # nothing claimed, nothing to source
+
+
+def test_search_by_category_and_by_primary_or_secondary_country(monkeypatch):
+    from libshipkore.track import detect
+    assert {c["slug"] for c in search_carriers(category="aggregator")} == {"ithink", "shiprocket"}
+    assert "delhivery" in {c["slug"] for c in search_carriers(country="in", category="ptl_freight")}
+    entries = [{"slug": "far", "name": "Far", "country": "DE", "supported": True,
+                "countries": {"primary": ["DE"], "secondary": ["IN"]},
+                "profile": {"sources": ["https://far.test/"], "verified_on": "2026-01-01"}}]
+    monkeypatch.setattr(detect, "_load", lambda: entries)
+    assert [c["slug"] for c in search_carriers(country="IN")] == ["far"]  # a secondary country counts
+    assert search_carriers(country="FR") == []
+
+
+def test_a_researched_entry_carries_its_contacts_and_provenance():
+    from libshipkore.track.detect import get_carrier
+    shiprocket = get_carrier("shiprocket")
+    assert {"address": "support@shiprocket.in", "label": "customer support"} in shiprocket["emails"]
+    assert shiprocket["profile"]["sources"][0].startswith("https://www.shiprocket.in")
+    assert get_carrier("bluedart")["phones"][0]["number"] == "+912240611234"
+    assert get_carrier("nonexistent") is None
+    assert "countries" not in get_carrier("yrc")  # not researched: nothing is invented
+
+
+def test_every_booking_carrier_is_in_the_directory():
+    from libshipkore.book.base import carrier_registry
+    assert set(carrier_registry.keys()) <= {c["slug"] for c in search_carriers(limit=1000)}

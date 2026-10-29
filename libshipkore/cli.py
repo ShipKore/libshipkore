@@ -18,6 +18,7 @@ from libshipkore.common.exceptions import ShipkoreError
 from libshipkore.common.serialization import to_jsonable
 from libshipkore.mcp_server.config import load_config  # needs no MCP SDK
 from libshipkore.provider import list_providers
+from libshipkore.directory import CATEGORIES
 from libshipkore.track.detect import search_carriers
 
 
@@ -97,11 +98,12 @@ def track(ctx, provider, waybill, refresh):
 
 @main.command()
 @click.argument("query", required=False)
-@click.option("--country", help="Two-letter country code, e.g. IN.")
+@click.option("--country", help="Two-letter country code: where the carrier is based or operates.")
+@click.option("--category", type=click.Choice(CATEGORIES), help="express_parcel, aggregator, ptl_freight...")
 @click.option("--supported/--unsupported", default=None, help="Only carriers whose tracking is (or is not) built.")
-def carriers(query, country, supported):
-    """Search the carrier directory by name or slug."""
-    show(search_carriers(query, country, supported, limit=1000))
+def carriers(query, country, category, supported):
+    """Search the carrier directory: website, contacts, categories, countries and service areas."""
+    show(search_carriers(query, country, supported, category, limit=1000))
 
 
 @main.command()

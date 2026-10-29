@@ -213,16 +213,27 @@ def register_read_tools(mcp, kore):
     @mcp.tool(title="Search carriers", annotations=LOOKUP)
     async def search_carriers(
         query: Annotated[Optional[str], Field(description="Part of a carrier's slug or name.")] = None,
-        country: Annotated[Optional[str], Field(description="Two-letter country code, e.g. IN.")] = None,
+        country: Annotated[
+            Optional[str],
+            Field(description="Two-letter country code, e.g. IN: where the carrier is based or operates."),
+        ] = None,
+        category: Annotated[
+            Optional[str],
+            Field(description="express_parcel, ecommerce, aggregator, hyperlocal, ptl_freight, "
+                              "ftl_freight, warehousing, international or postal."),
+        ] = None,
         supported: Annotated[
             Optional[bool], Field(description="True: tracking works. False: known but not built.")
         ] = None,
     ) -> list[dict]:
         """
-        Carriers the library knows, with whether tracking is built and, for the
-        rest, why not. Use the slug as `provider` in track_shipment.
+        Carriers the library knows: whether tracking is built (and why not),
+        and, where researched, website, phone numbers, emails, categories,
+        primary and secondary countries and service areas, each with the pages
+        and date they were read from. Missing fields mean not researched, not
+        that the carrier has none. Use the slug as `provider` in track_shipment.
         """
-        return await run_blocking(_search_carriers, query, country, supported)
+        return await run_blocking(_search_carriers, query, country, supported, category)
 
     @mcp.tool(title="Track an order", annotations=REFRESH)
     async def track_order(

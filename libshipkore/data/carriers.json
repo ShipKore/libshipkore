@@ -6,6 +6,31 @@
     "supported": true
   },
   {
+    "slug": "amazon-shipping",
+    "name": "amazon-shipping",
+    "supported": true,
+    "website": "https://shipping.amazon.in",
+    "categories": [
+      "express_parcel",
+      "ecommerce"
+    ],
+    "countries": {
+      "primary": [
+        "IN"
+      ],
+      "secondary": []
+    },
+    "service_areas": [
+      "India: delivery to 14,000+ pin codes, all COD enabled (the carrier's own figures)"
+    ],
+    "profile": {
+      "sources": [
+        "https://shipping.amazon.in/"
+      ],
+      "verified_on": "2026-10-29"
+    }
+  },
+  {
     "slug": "apc",
     "name": "APC Postal Logistics",
     "country": null,
@@ -21,13 +46,71 @@
     "slug": "bluedart",
     "name": "Blue Dart",
     "country": "IN",
-    "supported": true
+    "supported": true,
+    "website": "https://www.bluedart.com",
+    "phones": [
+      {
+        "number": "+912240611234",
+        "label": "customer service and free pickup booking"
+      },
+      {
+        "number": "+918046611234",
+        "label": "customer service and free pickup booking"
+      },
+      {
+        "number": "+918049611234",
+        "label": "customer service and free pickup booking"
+      }
+    ],
+    "categories": [
+      "express_parcel"
+    ],
+    "countries": {
+      "primary": [
+        "IN"
+      ],
+      "secondary": []
+    },
+    "service_areas": [
+      "India"
+    ],
+    "profile": {
+      "sources": [
+        "https://www.bluedart.com/web/guest/call-us",
+        "https://www.bluedart.com/"
+      ],
+      "verified_on": "2026-10-29"
+    }
   },
   {
     "slug": "delhivery",
     "name": "Delhivery",
     "country": "IN",
-    "supported": true
+    "supported": true,
+    "website": "https://www.delhivery.com",
+    "categories": [
+      "express_parcel",
+      "ptl_freight",
+      "ftl_freight",
+      "warehousing",
+      "international"
+    ],
+    "countries": {
+      "primary": [
+        "IN"
+      ],
+      "secondary": []
+    },
+    "service_areas": [
+      "India: express parcel, part-truckload and full-truckload freight, warehousing",
+      "International express parcel and freight to 220+ countries through partners FedEx and Aramex (the carrier's own statement; countries not listed)"
+    ],
+    "profile": {
+      "sources": [
+        "https://www.delhivery.com/"
+      ],
+      "verified_on": "2026-10-29"
+    }
   },
   {
     "slug": "dhl",
@@ -41,7 +124,28 @@
     "name": "DTDC",
     "country": "IN",
     "supported": false,
-    "note": "the tracking page now requires a captcha, which is never bypassed; the old scraper's host (tracking.dtdc.com) no longer resolves and was removed. Needs DTDC's API."
+    "note": "the tracking page now requires a captcha, which is never bypassed; the old scraper's host (tracking.dtdc.com) no longer resolves and was removed. Needs DTDC's API.",
+    "website": "https://www.dtdc.com",
+    "categories": [
+      "express_parcel",
+      "international"
+    ],
+    "countries": {
+      "primary": [
+        "IN"
+      ],
+      "secondary": []
+    },
+    "service_areas": [
+      "India",
+      "Global delivery to 220+ destinations (the carrier's own statement; countries not listed)"
+    ],
+    "profile": {
+      "sources": [
+        "https://www.dtdc.com/in/"
+      ],
+      "verified_on": "2026-10-29"
+    }
   },
   {
     "slug": "ecom-express",
@@ -53,7 +157,20 @@
     "slug": "ekart",
     "name": "Ekart Logistics",
     "country": "IN",
-    "supported": true
+    "supported": true,
+    "website": "https://ekartlogistics.com",
+    "countries": {
+      "primary": [
+        "IN"
+      ],
+      "secondary": []
+    },
+    "profile": {
+      "sources": [
+        "https://ekartlogistics.com/ekartlogistics-web/shipmenttrack/FMPP4415008127"
+      ],
+      "verified_on": "2026-10-29"
+    }
   },
   {
     "slug": "epostglobal",
@@ -97,6 +214,53 @@
     "name": "i-parcel",
     "country": null,
     "supported": true
+  },
+  {
+    "slug": "ithink",
+    "name": "iThink Logistics",
+    "supported": true,
+    "country": "IN",
+    "website": "https://www.ithinklogistics.com",
+    "phones": [
+      {
+        "number": "+918655203543",
+        "label": "contact page"
+      }
+    ],
+    "emails": [
+      {
+        "address": "support@ithinklogistics.com",
+        "label": "support"
+      },
+      {
+        "address": "sales@ithinklogistics.com",
+        "label": "sales"
+      },
+      {
+        "address": "info@ithinklogistics.com",
+        "label": "general"
+      }
+    ],
+    "categories": [
+      "aggregator",
+      "ecommerce"
+    ],
+    "countries": {
+      "primary": [
+        "IN"
+      ],
+      "secondary": []
+    },
+    "service_areas": [
+      "India: more than 29,000 serviceable pin codes (the company's own figure)"
+    ],
+    "profile": {
+      "sources": [
+        "https://www.ithinklogistics.com/",
+        "https://www.ithinklogistics.com/contact"
+      ],
+      "verified_on": "2026-10-29"
+    }
   },
   {
     "slug": "lasership",
@@ -150,7 +314,34 @@
     "slug": "professional-couriers",
     "name": "Professional Couriers",
     "country": "IN",
-    "supported": true
+    "supported": true,
+    "website": "https://www.tpcindia.com",
+    "emails": [
+      {
+        "address": "ho@tpcglobe.com",
+        "label": "head office"
+      }
+    ],
+    "categories": [
+      "express_parcel",
+      "international"
+    ],
+    "countries": {
+      "primary": [
+        "IN"
+      ],
+      "secondary": []
+    },
+    "service_areas": [
+      "India",
+      "Over 70,000 destinations in 200+ countries (the carrier's own statement; countries not listed)"
+    ],
+    "profile": {
+      "sources": [
+        "https://www.tpcindia.com/"
+      ],
+      "verified_on": "2026-10-29"
+    }
   },
   {
     "slug": "rl-carriers",
@@ -162,7 +353,35 @@
     "slug": "safexpress",
     "name": "Safexpress",
     "country": "IN",
-    "supported": true
+    "supported": true,
+    "website": "https://www.safexpress.com",
+    "phones": [
+      {
+        "number": "1800 113 113",
+        "label": "toll free, India"
+      }
+    ],
+    "emails": [
+      {
+        "address": "info@safexpress.com",
+        "label": "general"
+      }
+    ],
+    "countries": {
+      "primary": [
+        "IN"
+      ],
+      "secondary": []
+    },
+    "service_areas": [
+      "India: surface gateways with an average coverage radius under 33 km each, and air hubs with 76 airport connectivity (the carrier's own figures)"
+    ],
+    "profile": {
+      "sources": [
+        "https://www.safexpress.com/"
+      ],
+      "verified_on": "2026-10-29"
+    }
   },
   {
     "slug": "saia-freight",
@@ -174,7 +393,86 @@
     "slug": "shadowfax",
     "name": "Shadowfax",
     "country": "IN",
-    "supported": true
+    "supported": true,
+    "website": "https://www.shadowfax.in",
+    "phones": [
+      {
+        "number": "+918068172518",
+        "label": "order-related queries"
+      }
+    ],
+    "emails": [
+      {
+        "address": "hello@shadowfax.in",
+        "label": "general inquiries"
+      }
+    ],
+    "categories": [
+      "hyperlocal",
+      "ecommerce"
+    ],
+    "countries": {
+      "primary": [
+        "IN"
+      ],
+      "secondary": []
+    },
+    "profile": {
+      "sources": [
+        "https://www.shadowfax.in/contact-us"
+      ],
+      "verified_on": "2026-10-29"
+    }
+  },
+  {
+    "slug": "shiprocket",
+    "name": "Shiprocket",
+    "supported": true,
+    "country": "IN",
+    "website": "https://www.shiprocket.in",
+    "emails": [
+      {
+        "address": "support@shiprocket.in",
+        "label": "customer support"
+      },
+      {
+        "address": "escalation@shiprocket.com",
+        "label": "customer service escalation"
+      },
+      {
+        "address": "grievance@shiprocket.com",
+        "label": "grievances"
+      },
+      {
+        "address": "sales@shiprocket.com",
+        "label": "sales"
+      },
+      {
+        "address": "crossborder.sales@shiprocket.com",
+        "label": "cross-border sales"
+      }
+    ],
+    "categories": [
+      "aggregator",
+      "ecommerce",
+      "international"
+    ],
+    "countries": {
+      "primary": [
+        "IN"
+      ],
+      "secondary": []
+    },
+    "service_areas": [
+      "India: serviceable pin codes depend on the courier partner chosen"
+    ],
+    "profile": {
+      "sources": [
+        "https://www.shiprocket.in/contact/",
+        "https://www.shiprocket.in/"
+      ],
+      "verified_on": "2026-10-29"
+    }
   },
   {
     "slug": "shreeanjanicourier",
@@ -228,7 +526,34 @@
     "slug": "trackon",
     "name": "Trackon Couriers",
     "country": "IN",
-    "supported": true
+    "supported": true,
+    "website": "https://www.trackon.in",
+    "emails": [
+      {
+        "address": "customercare@trackon.in",
+        "label": "customer care"
+      }
+    ],
+    "categories": [
+      "express_parcel",
+      "international"
+    ],
+    "countries": {
+      "primary": [
+        "IN"
+      ],
+      "secondary": []
+    },
+    "service_areas": [
+      "India: franchise network of over 6,500 partners",
+      "International shipping to 196+ countries (the carrier's own statement; countries not listed)"
+    ],
+    "profile": {
+      "sources": [
+        "https://www.trackon.in/"
+      ],
+      "verified_on": "2026-10-29"
+    }
   },
   {
     "slug": "ups",
@@ -250,7 +575,33 @@
     "name": "Xpressbees",
     "country": "IN",
     "supported": false,
-    "note": "the public tracking page asks for a captcha; not built (no bypass), use the booking API once docs are available"
+    "note": "the public tracking page asks for a captcha; not built (no bypass), use the booking API once docs are available",
+    "website": "https://www.xpressbees.com",
+    "emails": [
+      {
+        "address": "customercare@xpressbees.com",
+        "label": "customer care"
+      }
+    ],
+    "categories": [
+      "express_parcel",
+      "ecommerce"
+    ],
+    "countries": {
+      "primary": [
+        "IN"
+      ],
+      "secondary": []
+    },
+    "service_areas": [
+      "India: 19,000+ pin codes (the carrier's own figure)"
+    ],
+    "profile": {
+      "sources": [
+        "https://www.xpressbees.com/"
+      ],
+      "verified_on": "2026-10-29"
+    }
   },
   {
     "slug": "yrc",

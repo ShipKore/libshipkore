@@ -43,9 +43,13 @@ the provider when you know it). Add `--refresh` to ask the courier again instead
 .. code-block:: bash
 
    libshipkore carriers delhivery
+   libshipkore carriers --country IN --category aggregator
    libshipkore carriers --country IN --unsupported
 
-Search the carrier directory: which carriers tracking is built for, and for the rest why not.
+Search the carrier directory: which carriers tracking is built for (and for the rest why not) and, for the
+couriers researched so far, their website, phone numbers, emails, categories, primary and secondary countries
+and service areas. Every one of those facts comes from the courier's own pages and carries the pages and the
+date it was read; a courier without them has not been researched yet, nothing is guessed.
 
 A few couriers (Ekart today) only show tracking on a page whose scripts build the request, so a plain HTTP call
 cannot reach it. For those the library opens the public page in a headless browser and reads what the page itself
