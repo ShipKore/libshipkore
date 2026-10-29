@@ -112,7 +112,8 @@ def test_the_directory_lists_every_tracker_and_the_known_gaps():
 def test_search_filters_by_name_country_and_support():
     assert {c["slug"] for c in search_carriers("blue")} == {"bluedart"}
     indian = search_carriers(country="in")
-    assert indian and all(c["country"] == "IN" for c in indian)
+    assert indian and all(
+        c.get("country") == "IN" or "IN" in c.get("countries", {}).get("primary", []) for c in indian)
     assert all(not c["supported"] for c in search_carriers(supported=False))
     assert "waybill_pattern" not in indian[0]
 
@@ -219,13 +220,13 @@ def test_every_directory_entry_is_valid_and_every_fact_has_a_source():
 
 
 @pytest.mark.parametrize("change,message", [
-    ({"website": "http://x.test"}, "https"),
+    ({"website": "x.test"}, "must be a URL"),
     ({"categories": ["fast"]}, "unknown categories"),
     ({"countries": {"primary": ["india"]}}, "two capital letters"),
     ({"country": "India"}, "two capital letters"),
     ({"emails": [{"address": "nobody", "label": "x"}]}, "not an email"),
     ({"phones": [{"number": "call us", "label": "x"}]}, "not a phone"),
-    ({"profile": {"sources": ["http://x.test"], "verified_on": "2026-01-01"}}, "https"),
+    ({"profile": {"sources": ["x.test"], "verified_on": "2026-01-01"}}, "URLs of the courier"),
     ({"surprise": 1}, "surprise"),
 ])
 def test_a_bad_profile_is_refused(change, message):
@@ -262,7 +263,7 @@ def test_a_researched_entry_carries_its_contacts_and_provenance():
     assert shiprocket["profile"]["sources"][0].startswith("https://www.shiprocket.in")
     assert get_carrier("bluedart")["phones"][0]["number"] == "+912240611234"
     assert get_carrier("nonexistent") is None
-    assert "countries" not in get_carrier("yrc")  # not researched: nothing is invented
+    assert "countries" not in get_carrier("pitney-bowes")  # not researched: nothing is invented
 
 
 def test_every_booking_carrier_is_in_the_directory():

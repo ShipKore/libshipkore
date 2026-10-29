@@ -14,7 +14,7 @@ Breaking:
 
 Added:
 
-* A carrier directory (``libshipkore carriers``, MCP ``search_carriers``) with each researched courier's website, phones, emails, categories, primary and secondary countries and service areas (sourced and dated; 12 of 46 researched so far), tracking without naming the
+* A carrier directory (``libshipkore carriers``, MCP ``search_carriers``) with each researched courier's website, phones, emails, categories, primary and secondary countries and service areas (sourced and dated; 28 of 46 researched so far). The First Flight and YRC trackers are removed (a hijacked domain and a company that ceased operations), tracking without naming the
   provider when the number format identifies the carrier, and trackers described as JSON specs
   (``libshipkore/track/specs/``). A browser fallback for pages a plain request cannot reach (``libshipkore[browser]``, Playwright; order: API, direct request, browser). Ekart and Shadowfax now track through it (Ekart replaces a scraper that no longer worked); the DTDC scraper is removed because its host is gone and its page now has a captcha. The first spec is Amazon Shipping India (recorded response). Xpressbees (captcha) and Shadowfax (token in page script) are listed as not built; the Ekart scraper no longer works.
 

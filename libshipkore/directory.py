@@ -86,8 +86,8 @@ class Provenance(Strict):
     @field_validator("sources")
     @classmethod
     def https_pages(cls, values):
-        if not values or any(not v.startswith("https://") for v in values):
-            raise ValueError("sources must be https URLs of the courier's own pages")
+        if not values or any(not v.startswith(("https://", "http://")) for v in values):
+            raise ValueError("sources must be URLs of the courier's own pages")
         return values
 
 
@@ -116,8 +116,8 @@ class Carrier(Strict):
     @field_validator("website")
     @classmethod
     def https_website(cls, value):
-        if value is not None and not value.startswith("https://"):
-            raise ValueError("website must be an https URL")
+        if value is not None and not value.startswith(("https://", "http://")):
+            raise ValueError("website must be a URL")
         return value
 
     @field_validator("categories")
