@@ -14,7 +14,8 @@ A spec is JSON:
       "request": {"method": "GET", "url": "https://x/{waybill}",
                   "headers": {}, "params": {}, "json": {}},
       "response": {
-        "scans": "data.scans",                      dotted path; digits index lists
+        "scans": "data.scans",                      dotted path; digits index lists;
+                                                   "@json" parses a JSON string on the way
         "fields": {"time": "ts", "message": "desc", "location": "place",
                    "code": "status", "city": "city", "state": "state", "zip": "pin"},
         "status": "data.current",                   optional, else the newest scan's
@@ -45,9 +46,14 @@ REQUIRED = ("slug", "name", "request", "response", "statuses")
 
 
 def dig(value, path):
-    """value["a"]["b"][0] for "a.b.0"; None as soon as the path leaves the data."""
+    """value["a"]["b"][0] for "a.b.0"; None as soon as the path leaves the data. "@json" parses a string."""
     for part in str(path).split("."):
-        if isinstance(value, dict):
+        if part == "@json":  # the value is JSON inside a string
+            try:
+                value = json.loads(value)
+            except (TypeError, ValueError):
+                return None
+        elif isinstance(value, dict):
             value = value.get(part)
         elif isinstance(value, list) and part.isdigit() and int(part) < len(value):
             value = value[int(part)]

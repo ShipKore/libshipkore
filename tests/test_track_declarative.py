@@ -145,3 +145,47 @@ def test_every_candidate_failing_is_reported(monkeypatch):
 def test_a_missing_spec_directory_means_no_specs_not_a_crash(tmp_path):
     # the shipped directory is empty today, and git does not store empty directories
     assert declarative.load_specs(str(tmp_path / "absent")) == []
+
+
+# the first shipped spec: Amazon Shipping India, from a recorded response ----
+
+AMAZON = "https://track.amazon.in/api/tracker/TESTID123"
+
+
+def amazon_fixture():
+    import os
+    with open(os.path.join(os.path.dirname(__file__), "fixtures", "amazon_shipping.json")) as handle:
+        return {k: v for k, v in json.load(handle).items() if k != "_note"}
+
+
+@responses.activate
+def test_amazon_shipping_from_its_recorded_response():
+    from libshipkore.track import get_track_data
+    responses.add(responses.GET, AMAZON, json=amazon_fixture())
+    track = get_track_data("amazon-shipping", "TESTID123")
+    assert track.status.value == "Delivered" and len(track.checkpoints) == 14
+    newest, oldest = track.checkpoints[0], track.checkpoints[-1]
+    assert (newest.message, newest.checkpoint_time.isoformat()) == ("Delivered", "2026-10-01T16:14:24+05:30")
+    assert oldest.status.value == "InfoReceived" and oldest.checkpoint_time.isoformat() == "2026-09-25T18:38:39+05:30"
+    gurugram = [c for c in track.checkpoints if c.city == "Gurugram"][0]
+    assert (gurugram.state, gurugram.zip) == ("Haryana", "122503")
+    assert [c.status.value for c in track.checkpoints if c.message == "DeliveryAttempted"] == ["AttemptFail"]
+    assert track.estimated_date.isoformat() == "2026-10-02T20:00:00+05:30"
+
+
+@responses.activate
+def test_amazon_shipping_not_found_is_a_provider_error():
+    from libshipkore.track import get_track_data
+    responses.add(responses.GET, AMAZON, json={"eventHistory": None, "progressTracker": "{}"})
+    with pytest.raises(ProviderError, match="no tracking data"):
+        get_track_data("amazon-shipping", "TESTID123")
+
+
+def test_json_inside_a_string_is_unpacked_and_bad_json_is_empty():
+    assert dig({"a": '{"b": [1, 2]}'}, "a.@json.b.1") == 2
+    assert dig({"a": "not json"}, "a.@json.b") is None and dig({"a": None}, "a.@json") is None
+
+
+def test_the_directory_knows_amazon_is_built_and_shadowfax_is_not():
+    assert search_carriers("amazon")[0]["supported"] is True
+    assert "token" in search_carriers("shadowfax")[0]["note"]

@@ -66,9 +66,10 @@ def test_registries_are_independent():
 def test_every_registered_name_in_the_library_is_unique_and_importable():
     from libshipkore.book.base import carrier_registry
     from libshipkore.track import track_registry
-    assert len(track_registry) == 38 and len(carrier_registry) == 3
+    assert len(track_registry) == 39 and len(carrier_registry) == 3
     for key in track_registry:
-        assert track_registry._classes[key].__module__.startswith("libshipkore.track.tracker.")
+        module = track_registry._classes[key].__module__
+        assert module.startswith("libshipkore.track.tracker.") or module == "libshipkore.track.declarative"
 
 
 def test_importing_the_library_needs_no_setuptools():
@@ -88,5 +89,5 @@ def test_importing_the_library_needs_no_setuptools():
     result = subprocess.run([sys.executable, "-W", "error::UserWarning", "-c", code],
                             text=True, capture_output=True, timeout=120)
     assert result.returncode == 0, result.stderr
-    assert result.stdout.strip() == "40"
+    assert result.stdout.strip() == "41"
     assert "pkg_resources" not in result.stderr  # and no deprecation warning either

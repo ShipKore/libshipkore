@@ -1,6 +1,6 @@
 # libshipkore: notes for coding agents
 
-A Python library that tracks parcels with 38 couriers (scrapers) and books, labels, cancels and manages orders with a growing set of carriers (Delhivery and Shiprocket so far, plus iThink tracking), behind one interface. It also ships an MCP server and a Claude Code plugin so AI agents can use it.
+A Python library that tracks parcels with 39 couriers (38 scrapers and one JSON spec) and books, labels, cancels and manages orders with a growing set of carriers (Delhivery and Shiprocket so far, plus iThink tracking), behind one interface. It also ships an MCP server and a Claude Code plugin so AI agents can use it.
 
 Python >= 3.10 and pydantic 2 only. The working language of the repo is English; the main users are in India.
 

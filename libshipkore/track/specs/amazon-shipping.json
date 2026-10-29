@@ -1,0 +1,35 @@
+{
+  "slug": "amazon-shipping",
+  "name": "Amazon Shipping India",
+  "country": "IN",
+  "source": "Public JSON from track.amazon.in, recorded 2026-10-29 for a delivered shipment; see tests/fixtures/amazon_shipping.json. Statuses other than the seven seen (CreationConfirmed, PickupDone, Received, Departed, OutForDelivery, DeliveryAttempted, Delivered) are unmapped and read as Exception. Event times carry no timezone; Indian Standard Time is an assumption from the Indian locations.",
+  "verified_on": "2026-10-29",
+  "request": {
+    "method": "GET",
+    "url": "https://track.amazon.in/api/tracker/{waybill}"
+  },
+  "response": {
+    "scans": "eventHistory.@json.eventHistory",
+    "fields": {
+      "time": "eventTime",
+      "code": "eventCode",
+      "message": "eventCode",
+      "city": "location.city",
+      "location": "location.city",
+      "state": "location.stateProvince",
+      "zip": "location.postalCode"
+    },
+    "estimated": "progressTracker.@json.expectedDeliveryDate",
+    "time_format": "%b %d, %Y, %I:%M:%S %p",
+    "timezone": "+05:30"
+  },
+  "statuses": {
+    "CreationConfirmed": "InfoReceived",
+    "PickupDone": "InTransit",
+    "Received": "InTransit",
+    "Departed": "InTransit",
+    "OutForDelivery": "OutForDelivery",
+    "DeliveryAttempted": "AttemptFail",
+    "Delivered": "Delivered"
+  }
+}

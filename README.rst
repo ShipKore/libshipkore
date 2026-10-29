@@ -2,7 +2,7 @@
 libshipkore
 ===========
 
-Shipkore: one Python interface to track parcels with 38 couriers and to book, label, cancel and manage
+Shipkore: one Python interface to track parcels with 39 couriers and to book, label, cancel and manage
 shipments with Indian and global carriers, plus an MCP server and a Claude Code plugin so AI agents can
 use it safely. This is first Open source product of Innerkore Technologies. We are commited to do things differently.
 
@@ -301,14 +301,14 @@ What works today
      - serviceability, service types, rates, book (forward and reverse), label, cancel, pickup, NDR
      - Written from its developer-portal docs; not run against staging
    * - Shiprocket
-     - serviceability, rates, book, label, cancel, pickup
+     - serviceability, rates, book, label, cancel, pickup, tracking (unverified)
      - Login, order, pickup and cancel from its docs; serviceability and AWB shapes are reconstructed; no sandbox
-   * - 38 couriers
+   * - 39 couriers
      - tracking only
-     - Scrapers and APIs; only Delhivery's and Ekart's have tests
+     - Scrapers, APIs and JSON specs; only Delhivery, Ekart and Amazon Shipping have tests (Ekart's scraper no longer works)
 
 The research behind this is `libshipkore/data/provider-capability-matrix.md`, which is also served by the
-MCP server. Shiprocket NDR, returns and tracking are not implemented, and the other carriers in the
+MCP server. Shiprocket NDR and returns are not implemented, and the other carriers in the
 matrix are not started.
 
 As Code (like cloning this Repo)

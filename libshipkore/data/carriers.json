@@ -52,7 +52,8 @@
     "slug": "ekart",
     "name": "Ekart Logistics",
     "country": "IN",
-    "supported": true
+    "supported": true,
+    "note": "the existing tracker uses the old getTrackingDetails endpoint, which now returns a CSRF error. The page now calls POST .../ekartlogistics-web-proxy/trackings/v2 (JSON: date in ms, city, statusDetails) but its request body is unknown."
   },
   {
     "slug": "epostglobal",
@@ -168,6 +169,13 @@
     "name": "Saia",
     "country": "US",
     "supported": true
+  },
+  {
+    "slug": "shadowfax",
+    "name": "Shadowfax",
+    "country": "IN",
+    "supported": false,
+    "note": "its tracking page calls its API with an access token embedded in the page's own JavaScript; not copied. Needs a token from Shadowfax."
   },
   {
     "slug": "shreeanjanicourier",
