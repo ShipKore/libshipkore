@@ -588,7 +588,7 @@ def register_resources(mcp, kore):
                   title="What is known about each provider's API")
     def capability_matrix_resource() -> str:
         """Per provider: auth, sandbox, and which operations exist, with how sure we are (Y, Y*, ?)."""
-        return files("libshipkore").joinpath("data", "provider-capability-matrix.md").read_text()
+        return files("libshipkore").joinpath("data", "provider-capability-matrix.md").read_text(encoding="utf-8")
 
     @mcp.resource("shipkore://orders/{order_id}", mime_type="application/json",
                   title="A stored order")

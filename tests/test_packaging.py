@@ -31,7 +31,7 @@ def lock():
 
 @pytest.fixture(scope="module")
 def setup_py():
-    with open(os.path.join(ROOT, "setup.py")) as handle:
+    with open(os.path.join(ROOT, "setup.py"), encoding="utf-8") as handle:
         return handle.read()
 
 

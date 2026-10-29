@@ -63,7 +63,7 @@ def load_config(path=None, environ=None):
     if not path:
         return {}
     try:
-        with open(path) as handle:
+        with open(path, encoding="utf-8") as handle:
             raw = json.load(handle)
     except FileNotFoundError:
         raise ConfigError(f"config file not found: {path}")

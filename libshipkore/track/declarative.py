@@ -239,7 +239,7 @@ def load_specs(directory=SPEC_DIR):
     for name in sorted(os.listdir(directory)):
         if not name.endswith(".json"):
             continue
-        with open(os.path.join(directory, name)) as handle:
+        with open(os.path.join(directory, name), encoding="utf-8") as handle:
             spec = json.load(handle)
         check_spec(spec, name)
         cls = type(f"Spec_{spec['slug'].replace('-', '_')}", (DeclarativeTracker,), {"spec": spec})
