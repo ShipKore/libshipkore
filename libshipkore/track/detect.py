@@ -15,7 +15,7 @@ from libshipkore.track.common.basetrackservice import track_registry
 
 
 def _load():
-    text = resources.files("libshipkore").joinpath("data/carriers.json").read_text()
+    text = resources.files("libshipkore").joinpath("data/carriers.json").read_text(encoding="utf-8")
     entries = {}
     for raw in json.loads(text):
         carrier = Carrier(**raw)  # a typo or an unsourced fact fails here, loudly
