@@ -1,0 +1,36 @@
+{
+  "slug": "ekart",
+  "name": "Ekart Logistics",
+  "country": "IN",
+  "source": "The tracking page https://ekartlogistics.com/shipmenttrack/<id> calls POST .../ekartlogistics-web-proxy/trackings/v2 itself; the JSON it receives was recorded 2026-10-29 for one in-transit shipment (tests/fixtures/ekart_trackings_v2.json). The request body is not known, so there is no direct request and the browser reads the page's own call. Status prefixes other than those seen (Shipment Created, Dispatched to, Received at, Out For Delivery, Unsuccessful) are carried over from the old scraper and unverified. Times are epoch milliseconds, shown here in Indian Standard Time.",
+  "verified_on": "2026-10-29",
+  "browser": {
+    "url": "https://ekartlogistics.com/shipmenttrack/{waybill}",
+    "capture": "trackings/v2"
+  },
+  "response": {
+    "scans": "{waybill}.shipmentTrackingDetails",
+    "fields": {
+      "time": "date",
+      "message": "statusDetails",
+      "code": "statusDetails",
+      "city": "city",
+      "location": "city"
+    },
+    "estimated": "{waybill}.expectedDeliveryDate",
+    "time_format": "epoch_ms",
+    "timezone": "+05:30"
+  },
+  "statuses": {},
+  "status_prefixes": {
+    "Shipment Created": "InfoReceived",
+    "Dispatched to": "InTransit",
+    "Received at": "InTransit",
+    "Out For Delivery": "OutForDelivery",
+    "Unsuccessful": "AttemptFail",
+    "Delivered": "Delivered",
+    "Pickup Requested": "AvailableForPickup",
+    "Out For Pickup": "AvailableForPickup",
+    "Picked up": "ReverseInTransit"
+  }
+}

@@ -22,7 +22,7 @@ claude plugin validate plugin && claude plugin validate .  # if the claude CLI i
 
 - `libshipkore/provider.py`: `get_provider(slug)` is the one interface for every provider; `capabilities` is computed from which operations a class overrides.
 - `libshipkore/book/base.py`: `BaseCarrier` (the operations, `validate`, `_request`) and `carrier_registry`; `libshipkore/book/carriers/`: one file per carrier; `libshipkore/book/models.py`: request and result models.
-- `libshipkore/track/`: `BaseTrackService` (`libshipkore/track/common/basetrackservice.py`), `track_registry`, the models in `libshipkore/track/models/model.py` and the scrapers in `libshipkore/track/tracker/`.
+- `libshipkore/track/`: `BaseTrackService` (`libshipkore/track/common/basetrackservice.py`), `track_registry`, the models in `libshipkore/track/models/model.py` the scrapers in `libshipkore/track/tracker/`, trackers as JSON data in `libshipkore/track/specs/` (engine: `libshipkore/track/declarative.py`), and the browser fallback `libshipkore/track/common/browser.py` with `LayeredTracker` (`libshipkore/track/common/layered.py`). Order of preference for any tracking: API, then direct request, then browser; a browser needs the `browser` extra and never solves captchas.
 - `libshipkore/client.py`: the `Shipkore` facade (orders, products, labels, tracking cache, audit trail) over `libshipkore/storage/` (JSON documents) and `libshipkore/files/` (label PDFs, S3 compatible).
 - `libshipkore/common/`: the `Model` base (`libshipkore/common/models.py`), exceptions (`libshipkore/common/exceptions.py`), `to_jsonable` (`libshipkore/common/serialization.py`).
 - `libshipkore/mcp_server/`: the MCP server. Tools in `libshipkore/mcp_server/tools.py`, preview-then-confirm in `libshipkore/mcp_server/confirm.py`, error translation in `libshipkore/mcp_server/errors.py`, config in `libshipkore/mcp_server/config.py`, the local-only HTTP transport in `libshipkore/mcp_server/http.py`.
@@ -51,4 +51,4 @@ claude plugin validate plugin && claude plugin validate .  # if the claude CLI i
 
 ## Not done yet
 
-Shiprocket NDR and returns (request bodies not readable without an account); Blue Dart (auth endpoint and every response shape unreadable; see the matrix); iThink orders, rates and NDR; DTDC, Xpressbees, Ekart and the other carriers in the matrix; recorded (non-hand-written) fixtures; the CLI (`libshipkore/cli.py`) is read-only on purpose and has no booking commands; only the Delhivery and Ekart trackers have tests.
+Shiprocket NDR and returns (request bodies not readable without an account); Blue Dart (auth endpoint and every response shape unreadable; see the matrix); iThink orders, rates and NDR; DTDC, Xpressbees, Ekart and the other carriers in the matrix; recorded (non-hand-written) fixtures; the CLI (`libshipkore/cli.py`) is read-only on purpose and has no booking commands; only the Delhivery tracker and the two spec trackers (Amazon Shipping, Ekart) have tests.

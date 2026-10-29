@@ -16,11 +16,13 @@ parsel = "^1.6.0"
 mcp = {version = ">=2.3,<3", optional = true}
 sqlalchemy = {version = ">=1.4", optional = true}
 boto3 = {version = ">=1.26", optional = true}
+playwright = {version = ">=1.40", optional = true}
 
 [tool.poetry.extras]
 mcp = ["mcp"]
 sql = ["sqlalchemy"]
 s3 = ["boto3"]
+browser = ["playwright"]
 
 [tool.poetry.scripts]
 libshipkore = "libshipkore.cli:main"

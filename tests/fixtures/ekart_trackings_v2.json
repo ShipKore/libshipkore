@@ -1,0 +1,62 @@
+{
+  "_note": "Recorded 2026-10-29 from the JSON that https://ekartlogistics.com/shipmenttrack/<id> receives from POST .../ekartlogistics-web-proxy/trackings/v2, for one in-transit shipment. The tracking id is replaced by TESTEKART1. Dates are epoch milliseconds, as sent.",
+  "TESTEKART1": {
+    "expectedDeliveryDate": 1793035800000,
+    "faShipment": true,
+    "reachedNearestHub": true,
+    "sourceCity": "Lucknow",
+    "destinationCity": "KANPUR",
+    "shipmentTrackingDetails": [
+      {
+        "date": 1792950296000,
+        "city": "Lucknow",
+        "statusDetails": "Shipment Created"
+      },
+      {
+        "date": 1792950303000,
+        "city": "Lucknow",
+        "statusDetails": "Dispatched to LKO/BTS"
+      },
+      {
+        "date": 1792950909000,
+        "city": "Lucknow",
+        "statusDetails": "Received at LKO/BTS"
+      },
+      {
+        "date": 1792953268000,
+        "city": "Lucknow",
+        "statusDetails": "Received at LKO/BTS"
+      },
+      {
+        "date": 1792963446000,
+        "city": "KANPUR",
+        "statusDetails": "Dispatched to AzadnagarHubTempBBD26_KNU"
+      },
+      {
+        "date": 1793050391000,
+        "city": "KANPUR",
+        "statusDetails": "Dispatched to AzadnagarHubTempBBD26_KNU"
+      },
+      {
+        "date": 1793067374000,
+        "city": "KANPUR",
+        "statusDetails": "Received at AzadnagarHubTempBBD26_KNU"
+      },
+      {
+        "date": 1793183638000,
+        "city": "KANPUR",
+        "statusDetails": "Out For Delivery"
+      },
+      {
+        "date": 1793189641000,
+        "city": "KANPUR",
+        "statusDetails": "Unsuccessful Unable to attempt delivery due to operational issues"
+      },
+      {
+        "date": 1793245861000,
+        "city": "KANPUR",
+        "statusDetails": "Out For Delivery"
+      }
+    ]
+  }
+}

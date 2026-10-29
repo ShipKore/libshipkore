@@ -47,6 +47,16 @@ the provider when you know it). Add `--refresh` to ask the courier again instead
 
 Search the carrier directory: which carriers tracking is built for, and for the rest why not.
 
+A few couriers (Ekart today) only show tracking on a page whose scripts build the request, so a plain HTTP call
+cannot reach it. For those the library opens the public page in a headless browser and reads what the page itself
+fetches. The order of preference is always the courier's API, then a direct request, then the browser. It needs
+the extra and a browser; the library never solves captchas:
+
+.. code-block:: bash
+
+   pip install "libshipkore[browser]"
+   playwright install chromium        # or have Google Chrome installed and set LIBSHIPKORE_BROWSER_CHANNEL=chrome
+
 The other commands look things up and change nothing at a provider:
 
 .. code-block:: bash
@@ -305,7 +315,7 @@ What works today
      - Login, order, pickup and cancel from its docs; serviceability and AWB shapes are reconstructed; no sandbox
    * - 39 couriers
      - tracking only
-     - Scrapers, APIs and JSON specs; only Delhivery, Ekart and Amazon Shipping have tests (Ekart's scraper no longer works)
+     - Scrapers, APIs and JSON specs; only Delhivery, Ekart and Amazon Shipping have tests
 
 The research behind this is `libshipkore/data/provider-capability-matrix.md`, which is also served by the
 MCP server. Shiprocket NDR and returns are not implemented, and the other carriers in the

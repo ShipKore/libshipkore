@@ -56,6 +56,8 @@ setup(
         "s3": ["boto3>=1.26"],
         # the MCP server for AI agents: the libshipkore-mcp command
         "mcp": ["mcp>=2.3,<3"],
+        # tracking through a real browser, the last resort (see track/common/browser.py)
+        "browser": ["playwright>=1.40"],
     },
     long_description=readme + "\n\n" + history,
     include_package_data=True,

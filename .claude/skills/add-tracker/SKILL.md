@@ -6,13 +6,13 @@ argument-hint: "[courier name]"
 
 # Add or fix a tracker
 
-A tracker fetches one courier's tracking data and turns it into the standard `Track`. Booking is separate: see the `add-carrier` skill. Two trackers are tested end to end and are good models: `libshipkore/track/tracker/delhivery.py` (JSON API) and `libshipkore/track/tracker/ekart.py` (JSON POST). The other 36 have no tests, so do not assume they are right.
+A tracker fetches one courier's tracking data and turns it into the standard `Track`. Booking is separate: see the `add-carrier` skill. Good models: `libshipkore/track/tracker/delhivery.py` (a Python tracker), `libshipkore/track/specs/amazon-shipping.json` (a spec over a plain request) and `libshipkore/track/specs/ekart.json` (a spec that reads the page's own request through a browser). Most of the other trackers have no tests, so do not assume they are right.
 
 $ARGUMENTS
 
 ## 1. Find the best data source
 
-Prefer the courier's own tracking API over scraping its HTML. Look at what its public tracking page calls in the browser's network tab. Respect the site's terms and do not hammer it. Never put a login or token in the tracker: trackers take no credentials.
+The order of preference is fixed: **1. the courier's API** (needs credentials: a booking carrier in `libshipkore/book/carriers/`), **2. a direct request** to a public JSON endpoint (a tracker or spec), **3. the page in a browser** (`libshipkore/track/common/browser.py`, last resort). Use a lower layer only when the one above is not possible, and say why in the spec's `source`. A browser is for pages that build their request from scripts, cookies or a CSRF handshake; give the spec a `browser` block (`url` and `capture`) so it reads the page's own JSON call, or subclass `LayeredTracker` and define `fetch_api`, `fetch_request`, `fetch_browser`. Never solve a captcha, never copy a token out of a site's scripts. Prefer the courier's own tracking API over scraping its HTML. Look at what its public tracking page calls in the browser's network tab. Respect the site's terms and do not hammer it. Never put a login or token in the tracker: trackers take no credentials.
 
 ## 2. Write the tracker
 

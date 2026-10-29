@@ -23,26 +23,39 @@ A spec is JSON:
         "time_format": "%d-%m-%Y %H:%M",            optional, else ISO
         "timezone": "+05:30"                        added to times that carry none
       },
-      "statuses": {"DELIVERED": "Delivered"}        words to StatusChoice names
+      "statuses": {"DELIVERED": "Delivered"},       words to StatusChoice names
+      "status_prefixes": {"Out For": "OutForDelivery"}   optional: a word starting so
     }
 
-{waybill} is replaced in the url, params and json. Anything missing from the
+Instead of (or after) "request", a spec can name a browser fallback for pages
+that build their own request from scripts, cookies or a CSRF handshake:
+
+      "browser": {"url": "https://x/track/{waybill}", "capture": "trackings/v2"}
+
+The page is opened in a headless browser and the JSON of the request it makes
+whose URL contains "capture" is read with the same "response" rules. The order
+is request first, browser only if that fails (see track/common/browser.py).
+"time_format" may be "epoch_ms" for millisecond timestamps.
+
+{waybill} is replaced in the url, params, json and response paths. Anything missing from the
 response becomes an empty field; an unmapped status word becomes Exception.
 """
 import json
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 import requests
 
 from libshipkore.common.exceptions import ProviderError
-from libshipkore.track.common.basetrackservice import BaseTrackService, track_registry
+from libshipkore.track.common import browser
+from libshipkore.track.common.basetrackservice import track_registry
+from libshipkore.track.common.layered import LayeredTracker
 from libshipkore.track.models.model import StatusChoice
 
 SPEC_DIR = os.path.join(os.path.dirname(__file__), "specs")
 TZ_SUFFIX = re.compile(r"(Z|[+-]\d{2}:?\d{2})$")
-REQUIRED = ("slug", "name", "request", "response", "statuses")
+REQUIRED = ("slug", "name", "response", "statuses")
 
 
 def dig(value, path):
@@ -78,9 +91,15 @@ def check_spec(spec, source="spec"):
         raise ValueError(f"{source}: say verified_on (a date) or unverified: true")
     if "source" not in spec:
         raise ValueError(f"{source}: say where the response shape was seen")
-    if "{waybill}" not in json.dumps(spec["request"]):
-        raise ValueError(f"{source}: the request never uses {{waybill}}")
-    bad = sorted(set(spec["statuses"].values()) - {s.value for s in StatusChoice})
+    if not (spec.get("request") or spec.get("browser")):
+        raise ValueError(f"{source}: needs a request or a browser")
+    for kind in ("request", "browser"):
+        if spec.get(kind) and "{waybill}" not in json.dumps(spec[kind]):
+            raise ValueError(f"{source}: the {kind} never uses {{waybill}}")
+    if spec.get("browser") and not spec["browser"].get("capture"):
+        raise ValueError(f"{source}: browser needs capture (part of the URL of the page's own request)")
+    names = set(spec["statuses"].values()) | set(spec.get("status_prefixes", {}).values())
+    bad = sorted(names - {s.value for s in StatusChoice})
     if bad:
         raise ValueError(f"{source}: unknown status names {bad}")
     if "scans" not in spec["response"] or "time" not in spec["response"].get("fields", {}):
@@ -89,10 +108,21 @@ def check_spec(spec, source="spec"):
         re.compile(spec["waybill_pattern"])
 
 
+def offset(text):
+    """timezone("+05:30") as a tzinfo; UTC when absent."""
+    match = re.fullmatch(r"([+-])(\d{2}):?(\d{2})", text or "")
+    if not match:
+        return timezone.utc
+    delta = timedelta(hours=int(match.group(2)), minutes=int(match.group(3)))
+    return timezone(delta if match.group(1) == "+" else -delta)
+
+
 def moment(text, response):
     """A scan time as ISO text with an offset, from the spec's format and timezone."""
     if text is None or text == "":
         return None
+    if response.get("time_format") == "epoch_ms":
+        return datetime.fromtimestamp(int(text) / 1000, offset(response.get("timezone"))).isoformat()
     text = str(text).strip()
     if response.get("time_format"):
         try:
@@ -106,14 +136,16 @@ def moment(text, response):
     return text
 
 
-class DeclarativeTracker(BaseTrackService):
+class DeclarativeTracker(LayeredTracker):
     spec = None  # set on each generated subclass
 
     def __init__(self, waybill, *args, **kwargs):
         super().__init__(waybill, self.spec["slug"], *args, **kwargs)
 
-    def _fetch(self):
-        request = self.spec["request"]
+    def fetch_request(self):
+        request = self.spec.get("request")
+        if not request:
+            raise NotImplementedError("no direct request for this carrier")
         call = fill(request, self.waybill)
         response = requests.request(
             call.get("method", "GET"), call["url"], headers=call.get("headers"),
@@ -123,18 +155,33 @@ class DeclarativeTracker(BaseTrackService):
             raise ProviderError(self.provider, f"HTTP {response.status_code}",
                                 status_code=response.status_code, body=response.text)
         try:
-            self.raw_data = response.json()
+            return response.json()
         except ValueError:
             raise ProviderError(self.provider, "response was not JSON", body=response.text)
 
+    def fetch_browser(self):
+        page = self.spec.get("browser")
+        if not page:
+            raise NotImplementedError("no browser fallback for this carrier")
+        call = fill(page, self.waybill)
+        return browser.capture_json(call["url"], call["capture"])
+
     def _status(self, word):
-        name = self.spec["statuses"].get(str(word)) if word is not None else None
+        if word is None:
+            return StatusChoice.Exception.value
+        word = str(word)
+        name = self.spec["statuses"].get(word)
+        if not name:
+            lowered = word.lower()
+            for prefix, mapped in self.spec.get("status_prefixes", {}).items():
+                if lowered.startswith(prefix.lower()):
+                    return mapped
         return name or StatusChoice.Exception.value
 
-    def _transform(self):
+    def transform(self):
         rules = self.spec["response"]
         fields = rules["fields"]
-        scans = dig(self.raw_data, rules["scans"])
+        scans = dig(self.raw_data, fill(rules["scans"], self.waybill))
         if not scans:
             raise ProviderError(self.provider, f"no tracking data for {self.waybill}",
                                 body=self.raw_data)
@@ -154,14 +201,14 @@ class DeclarativeTracker(BaseTrackService):
             })
         checkpoints = [c for c in checkpoints if c["checkpoint_time"]]
         checkpoints.sort(key=lambda c: c["checkpoint_time"], reverse=True)  # newest first
-        current = dig(self.raw_data, rules["status"]) if "status" in rules else None
+        current = dig(self.raw_data, fill(rules["status"], self.waybill)) if "status" in rules else None
+        estimated = dig(self.raw_data, fill(rules["estimated"], self.waybill)) if "estimated" in rules else None
         self.data = {
             "waybill": self.waybill,
             "provider": self.provider,
             "status": self._status(current) if current is not None else checkpoints[0]["status"],
             "substatus": current if current is not None else checkpoints[0]["substatus"],
-            "estimated_date": moment(dig(self.raw_data, rules["estimated"]), rules)
-            if "estimated" in rules else None,
+            "estimated_date": moment(estimated, rules),
             "checkpoints": checkpoints,
         }
         return self.data

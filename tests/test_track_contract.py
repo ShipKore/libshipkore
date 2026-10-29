@@ -163,35 +163,3 @@ def test_delhivery_tracker_end_to_end():
     assert [c["status"] for c in data["checkpoints"]] == ["InfoReceived", "OutForDelivery"]
     assert data["checkpoints"][0]["checkpoint_time"] == "2026-01-02T10:30:00+05:30"
     assert data["checkpoints"][1]["country_iso3"] == "IND"
-
-
-@responses.activate
-def test_ekart_tracker_end_to_end_with_date_only_values():
-    responses.add(
-        responses.POST,
-        "https://ekartlogistics.com/ws/getTrackingDetails",
-        json={
-            "expectedDeliveryDate": "2026-01-05",
-            "shipmentType": "FORWARD",
-            "destinationCity": "Pune",
-            "merchantName": "Acme",
-            "receiverName": "Asha",
-            "receiverRelationShip": "self",
-            # Ekart lists scans oldest first; the last one is the current status
-            "shipmentTrackingDetails": [
-                {"statusDetails": "Shipment Created", "city": "Mumbai",
-                 "instructions": "Created", "date": "2026-01-02T10:00:00"},
-                {"statusDetails": "Delivered", "city": "Pune",
-                 "instructions": "Handed over", "date": "2026-01-04"},
-            ],
-        },
-    )
-    result = get_track_data("ekart", "FMPP123")
-    data = to_jsonable(result)
-    assert data["status"] == "Delivered" and data["receiver_name"] == "Asha"
-    assert data["estimated_date"] == "2026-01-05"  # stays a date
-    # the tracker returns checkpoints newest first
-    assert [c["checkpoint_time"] for c in data["checkpoints"]] == [
-        "2026-01-04", "2026-01-02T10:00:00",
-    ]
-    assert "shipment_type" not in data and "receiver_relationship" not in data
