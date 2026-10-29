@@ -101,18 +101,30 @@ def render(url, wait_for=None, timeout_ms=DEFAULT_TIMEOUT_MS):
             raise
 
 
-def capture_json(url, match, timeout_ms=DEFAULT_TIMEOUT_MS):
+def capture_json(url, match, steps=None, timeout_ms=DEFAULT_TIMEOUT_MS):
     """
     Load a page and return the JSON body of the first request the page itself
-    makes whose URL contains `match`. The page builds the request (cookies,
-    CSRF tokens, headers); we only read the answer.
+    makes (in any tab it opens) whose URL contains `match`. The page builds
+    the request (cookies, CSRF tokens, headers); we only read the answer.
+
+    `steps` act like a visitor on the page first: {"fill": selector, "value": text}
+    types into a field and {"click": selector} presses a button.
     """
     with browser_page(timeout_ms) as page:
         try:
-            with page.expect_response(
-                lambda response: match in response.url and response.status == 200
+            with page.context.expect_event(
+                "response", lambda response: match in response.url and response.status == 200
             ) as seen:
                 page.goto(url, wait_until="domcontentloaded")
+                if steps:
+                    page.wait_for_load_state("networkidle")  # let the page's scripts attach
+                for step in steps or []:
+                    if "fill" in step:
+                        page.fill(step["fill"], step["value"])
+                    elif "click" in step:
+                        page.click(step["click"])
+                    else:
+                        raise ValueError(f"unknown browser step {step}")
             return seen.value.json()
         except Exception as error:
             if _timeout_error(error):

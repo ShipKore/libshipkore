@@ -123,8 +123,8 @@ async def test_providers_report_capabilities_and_what_is_configured(client):
     assert providers["delhivery"]["configured"] is True
     assert "create_shipment" in providers["delhivery"]["operations"]
     assert providers["shiprocket"]["operations"] == sorted(providers["shiprocket"]["operations"])
-    assert providers["dtdc"] == {
-        "slug": "dtdc", "operations": ["track"], "configured": False, "sandbox": False}
+    assert providers["trackon"] == {
+        "slug": "trackon", "operations": ["track"], "configured": False, "sandbox": False}
     assert "api_token" not in json.dumps(providers)  # credentials never leave the server
 
 
@@ -173,7 +173,7 @@ async def test_track_shipment_and_its_cache(client, monkeypatch):
 
 async def test_track_works_for_a_provider_with_no_credentials(client, monkeypatch):
     monkeypatch.setattr("libshipkore.book.base.get_track_data", lambda s, w: make_track())
-    assert data(await client.call_tool("track_shipment", {"provider": "dtdc", "waybill": "1"}))
+    assert data(await client.call_tool("track_shipment", {"provider": "trackon", "waybill": "1"}))
 
 
 # orders, products, audit trail ---------------------------------------------
@@ -331,7 +331,7 @@ async def test_a_missing_resource_is_an_error(client):
 
 async def test_the_server_runs_as_a_real_stdio_process(tmp_path):
     config = tmp_path / "config.json"
-    config.write_text(json.dumps({"providers": {"dtdc": {"credentials": {}}}}))
+    config.write_text(json.dumps({"providers": {"trackon": {"credentials": {}}}}))
     config.chmod(0o600)
     params = StdioServerParameters(
         command=sys.executable,
@@ -343,7 +343,7 @@ async def test_the_server_runs_as_a_real_stdio_process(tmp_path):
         names = {t.name for t in (await client.list_tools()).tools}
         assert LOOKUP_TOOLS <= names
         providers = data(await client.call_tool("list_providers", {}))
-        assert {p["slug"]: p["configured"] for p in providers}["dtdc"] is True
+        assert {p["slug"]: p["configured"] for p in providers}["trackon"] is True
         failed = await client.call_tool(
             "check_serviceability", {"provider": "nope", "pincode": "110001"})
         assert failed.is_error and "Call list_providers" in text(failed)

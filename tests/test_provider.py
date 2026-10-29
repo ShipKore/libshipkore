@@ -25,12 +25,12 @@ def test_capabilities_reflect_what_is_implemented():
 
 
 def test_tracking_only_provider_uses_the_same_interface():
-    dtdc = get_provider("dtdc")
-    assert isinstance(dtdc, TrackOnlyCarrier) and isinstance(dtdc, BaseCarrier)
-    assert dtdc.provider == "dtdc"
-    assert dtdc.capabilities == {"track"}
+    trackon = get_provider("trackon")
+    assert isinstance(trackon, TrackOnlyCarrier) and isinstance(trackon, BaseCarrier)
+    assert trackon.provider == "trackon"
+    assert trackon.capabilities == {"track"}
     with pytest.raises(UnsupportedOperation):
-        dtdc.create_shipment(None)
+        trackon.create_shipment(None)
 
 
 def test_alias_resolves_like_track():
@@ -54,7 +54,7 @@ def test_a_mistyped_provider_is_corrected_in_the_error_itself():
 
 def test_every_registered_provider_has_one_consistent_surface():
     listing = list_providers()
-    assert {"delhivery", "shiprocket", "dtdc", "fedex"} <= set(listing)
+    assert {"delhivery", "shiprocket", "trackon", "fedex"} <= set(listing)
     for slug, capabilities in listing.items():
         assert capabilities, slug
         assert set(capabilities) <= set(OPERATIONS), slug
@@ -79,7 +79,7 @@ MINIMAL_ARGS = {
 
 def test_unsupported_operations_are_exactly_the_missing_capabilities():
     assert set(MINIMAL_ARGS) == set(OPERATIONS)
-    for slug in ("delhivery", "shiprocket", "dtdc"):
+    for slug in ("delhivery", "shiprocket", "trackon"):
         provider = get_provider(slug)
         for operation in set(OPERATIONS) - provider.capabilities:
             with pytest.raises(UnsupportedOperation):
@@ -94,8 +94,8 @@ def test_track_goes_through_the_shared_tracker(monkeypatch):
         base, "get_track_data", lambda slug, waybill: calls.append((slug, waybill)) or "T"
     )
     assert get_provider("delhivery").track("123") == "T"
-    assert get_provider("dtdc").track("456") == "T"
-    assert calls == [("delhivery", "123"), ("dtdc", "456")]
+    assert get_provider("trackon").track("456") == "T"
+    assert calls == [("delhivery", "123"), ("trackon", "456")]
 
 
 def test_provider_reexported_from_main_module():

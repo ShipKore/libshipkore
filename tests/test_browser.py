@@ -37,6 +37,7 @@ class FakeResponse:
 class FakePage:
     def __init__(self, world):
         self.world = world
+        self.context = types.SimpleNamespace(expect_event=self.expect_event)
 
     def route(self, pattern, handler):
         self.world["routes"].append(handler)
@@ -52,8 +53,18 @@ class FakePage:
             raise FakeTimeoutError("waiting")
         self.world["waited"] = selector
 
-    def expect_response(self, predicate):
+    def wait_for_load_state(self, state):
+        self.world["settled"] = state
+
+    def fill(self, selector, value):
+        self.world.setdefault("acts", []).append(("fill", selector, value))
+
+    def click(self, selector):
+        self.world.setdefault("acts", []).append(("click", selector))
+
+    def expect_event(self, name, predicate):
         world = self.world
+        assert name == "response"  # the context-wide event, so a tab the page opens is seen too
 
         class Seen:
             def __enter__(self):
@@ -124,6 +135,17 @@ def test_capture_json_returns_what_the_page_itself_fetched(playwright):
     ]
     assert browser.capture_json("https://x.test/track/1", "trackings/v2") == {"yes": 1}
     assert playwright["visited"] == ["https://x.test/track/1"] and playwright["closed"]
+    assert "acts" not in playwright and "settled" not in playwright  # no steps, no waiting around
+
+
+def test_steps_act_like_a_visitor_after_the_page_has_settled(playwright):
+    playwright["responses"] = [FakeResponse("https://api.test/track/AWB1/", {"ok": 1})]
+    steps = [{"fill": "#awb", "value": "AWB1"}, {"click": "button"}]
+    assert browser.capture_json("https://x.test", "/track/", steps) == {"ok": 1}
+    assert playwright["settled"] == "networkidle"
+    assert playwright["acts"] == [("fill", "#awb", "AWB1"), ("click", "button")]
+    with pytest.raises(ValueError, match="unknown browser step"):
+        browser.capture_json("https://x.test", "/track/", [{"hover": "a"}])
 
 
 def test_a_failed_response_is_not_taken_for_the_answer(playwright):
@@ -243,7 +265,7 @@ def test_ekart_tracks_through_the_browser_from_a_recorded_response(monkeypatch):
         recorded = {k: v for k, v in json.load(handle).items() if k != "_note"}
     seen = []
     monkeypatch.setattr(browser, "capture_json",
-                        lambda url, match: seen.append((url, match)) or recorded)
+                        lambda url, match, steps=None: seen.append((url, match)) or recorded)
     track = get_track_data("ekart", "TESTEKART1")
     assert seen == [("https://ekartlogistics.com/shipmenttrack/TESTEKART1", "trackings/v2")]
     assert track.provider == "ekart" and len(track.checkpoints) == 10
@@ -272,3 +294,25 @@ def test_the_old_ekart_scraper_is_gone_and_the_spec_is_registered():
 def test_live_ekart_in_a_real_browser():
     track = get_track_data("ekart", os.environ["LIBSHIPKORE_LIVE_BROWSER"])
     assert track.checkpoints
+
+
+def test_shadowfax_fills_the_form_then_reads_the_pages_own_call(monkeypatch):
+    with open(os.path.join(HERE, "fixtures", "shadowfax_track.json")) as handle:
+        recorded = {k: v for k, v in json.load(handle).items() if k != "_note"}
+    seen = []
+    monkeypatch.setattr(browser, "capture_json",
+                        lambda url, match, steps=None: seen.append((url, match, steps)) or recorded)
+    track = get_track_data("shadowfax", "TESTSF1")
+    url, match, steps = seen[0]
+    assert url == "https://www.shadowfax.in/track" and match == "/web_app/delivery/track/"
+    assert steps[0] == {"fill": "input[placeholder='Enter AWB Number']", "value": "TESTSF1"}  # the waybill is filled in
+    assert track.status.value == "AttemptFail" and track.substatus == "Delivery Attempt Unsucessful"
+    assert track.checkpoints[0].checkpoint_time.isoformat() == "2026-10-28T21:26:20+05:30"
+    assert track.checkpoints[0].message.startswith("Delivery attempt failed")
+    assert track.estimated_date.isoformat() == "2026-10-28T00:00:00+05:30"
+
+
+def test_dtdc_is_not_claimed_the_directory_says_why():
+    from libshipkore.track.detect import search_carriers
+    dtdc = search_carriers("dtdc")[0]
+    assert dtdc["supported"] is False and "captcha" in dtdc["note"] and "dtdc" not in track_registry

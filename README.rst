@@ -315,7 +315,7 @@ What works today
      - Login, order, pickup and cancel from its docs; serviceability and AWB shapes are reconstructed; no sandbox
    * - 39 couriers
      - tracking only
-     - Scrapers, APIs and JSON specs; only Delhivery, Ekart and Amazon Shipping have tests
+     - Scrapers, APIs and JSON specs; only Delhivery, Ekart, Shadowfax and Amazon Shipping have tests
 
 The research behind this is `libshipkore/data/provider-capability-matrix.md`, which is also served by the
 MCP server. Shiprocket NDR and returns are not implemented, and the other carriers in the

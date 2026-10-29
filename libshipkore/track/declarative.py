@@ -33,9 +33,12 @@ that build their own request from scripts, cookies or a CSRF handshake:
       "browser": {"url": "https://x/track/{waybill}", "capture": "trackings/v2"}
 
 The page is opened in a headless browser and the JSON of the request it makes
-whose URL contains "capture" is read with the same "response" rules. The order
+whose URL contains "capture" is read with the same "response" rules. Optional
+"steps" ([{"fill": selector, "value": "{waybill}"}, {"click": selector}]) act
+like a visitor first, for pages that only look a number up after a form submit. The order
 is request first, browser only if that fails (see track/common/browser.py).
-"time_format" may be "epoch_ms" for millisecond timestamps.
+"time_format" may be "epoch_ms" for millisecond timestamps; "estimated_format"
+sets a different format for the estimate (default: the same).
 
 {waybill} is replaced in the url, params, json and response paths. Anything missing from the
 response becomes an empty field; an unmapped status word becomes Exception.
@@ -80,6 +83,8 @@ def fill(value, waybill):
         return value.replace("{waybill}", waybill)
     if isinstance(value, dict):
         return {k: fill(v, waybill) for k, v in value.items()}
+    if isinstance(value, list):
+        return [fill(v, waybill) for v in value]
     return value
 
 
@@ -117,16 +122,17 @@ def offset(text):
     return timezone(delta if match.group(1) == "+" else -delta)
 
 
-def moment(text, response):
+def moment(text, response, format_key="time_format"):
     """A scan time as ISO text with an offset, from the spec's format and timezone."""
     if text is None or text == "":
         return None
-    if response.get("time_format") == "epoch_ms":
+    pattern = response.get(format_key) or (response.get("time_format") if format_key == "estimated_format" else None)
+    if pattern == "epoch_ms":
         return datetime.fromtimestamp(int(text) / 1000, offset(response.get("timezone"))).isoformat()
     text = str(text).strip()
-    if response.get("time_format"):
+    if pattern:
         try:
-            text = datetime.strptime(text, response["time_format"]).isoformat()
+            text = datetime.strptime(text, pattern).isoformat()
         except ValueError:
             datetime.fromisoformat(text.replace("Z", "+00:00"))  # already ISO, else this raises
     else:
@@ -164,7 +170,7 @@ class DeclarativeTracker(LayeredTracker):
         if not page:
             raise NotImplementedError("no browser fallback for this carrier")
         call = fill(page, self.waybill)
-        return browser.capture_json(call["url"], call["capture"])
+        return browser.capture_json(call["url"], call["capture"], call.get("steps"))
 
     def _status(self, word):
         if word is None:
@@ -177,6 +183,13 @@ class DeclarativeTracker(LayeredTracker):
                 if lowered.startswith(prefix.lower()):
                     return mapped
         return name or StatusChoice.Exception.value
+
+    @staticmethod
+    def _estimate(value, rules):
+        try:
+            return moment(value, rules, "estimated_format")
+        except ValueError:  # a delivery estimate we cannot read must not lose the scans
+            return None
 
     def transform(self):
         rules = self.spec["response"]
@@ -208,7 +221,7 @@ class DeclarativeTracker(LayeredTracker):
             "provider": self.provider,
             "status": self._status(current) if current is not None else checkpoints[0]["status"],
             "substatus": current if current is not None else checkpoints[0]["substatus"],
-            "estimated_date": moment(estimated, rules),
+            "estimated_date": self._estimate(estimated, rules),
             "checkpoints": checkpoints,
         }
         return self.data

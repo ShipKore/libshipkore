@@ -1,0 +1,29 @@
+{
+  "_note": "Recorded 2026-10-29 from the JSON that https://www.shadowfax.in/track receives (GET saruman.shadowfax.in/web_app/delivery/track/<awb>/) after the AWB is entered in the page, for one shipment with a failed delivery attempt. The AWB is replaced by TESTSF1; the phone number is masked as sent. Only one status group was seen.",
+  "message": "Success",
+  "order_details": {
+    "awb_number": "TESTSF1",
+    "customer_contact": "94XXXXXXX9",
+    "exp_delivery_date": "28 October 2026, Wednesday",
+    "status_id": "undelivered_nc",
+    "final_status": "Delivery Attempt Unsucessful",
+    "remarks": "We will re-attempt delivery tomorrow. Please be available for the delivery.",
+    "genuine_nc": false
+  },
+  "map_view": false,
+  "data": [
+    {
+      "main_status": "Delivery Attempt Unsucessful",
+      "sub_status": [
+        "Delivery attempt failed. We will re-attempt delivery again"
+      ],
+      "time": [
+        "2026-10-28T21:26:20"
+      ],
+      "sub_status2": "Need help? Raise a support request here.",
+      "main_status_id": 6
+    }
+  ],
+  "return_alert_flag": false,
+  "pod_data": []
+}

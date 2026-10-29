@@ -186,6 +186,15 @@ def test_json_inside_a_string_is_unpacked_and_bad_json_is_empty():
     assert dig({"a": "not json"}, "a.@json.b") is None and dig({"a": None}, "a.@json") is None
 
 
-def test_the_directory_knows_amazon_is_built_and_shadowfax_is_not():
-    assert search_carriers("amazon")[0]["supported"] is True
-    assert "token" in search_carriers("shadowfax")[0]["note"]
+def test_the_directory_marks_what_is_built():
+    for name in ("amazon", "shadowfax", "ekart"):
+        assert search_carriers(name)[0]["supported"] is True, name
+
+
+def test_an_unreadable_estimate_loses_the_estimate_not_the_scans():
+    spec = {**SPEC, "response": {**SPEC["response"], "estimated": "data.etd", "estimated_format": "%Y"}}
+    cls = type("Spec_est", (DeclarativeTracker,), {"spec": spec})
+    tracker = cls("AC123456")
+    tracker.raw_data = {"data": {**BODY["data"], "etd": "soon"}}
+    tracker.transform()
+    assert tracker.data.estimated_date is None and len(tracker.data.checkpoints) == 3

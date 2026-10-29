@@ -80,7 +80,7 @@ def test_providers_shows_what_each_one_can_do():
     result = run("providers")
     assert result.exit_code == 0
     providers = json.loads(result.output)
-    assert providers["dtdc"] == ["track"]
+    assert providers["trackon"] == ["track"]
     assert {"create_shipment", "label", "ndr_action", "track"} <= set(providers["delhivery"])
     assert len(providers) == 41
 
@@ -168,8 +168,8 @@ def test_rates_rejects_a_nonsense_weight_before_calling_anyone():
 def test_services(config):
     result = run("--config", config, "services", "--provider", "delhivery")
     assert [s["name"] for s in json.loads(result.output)] == ["Express", "Surface"]
-    unsupported = run("services", "--provider", "dtdc")
-    assert unsupported.exit_code == 1 and "Not supported" in unsupported.output or "dtdc" in unsupported.output
+    unsupported = run("services", "--provider", "trackon")
+    assert unsupported.exit_code == 1 and "Not supported" in unsupported.output or "trackon" in unsupported.output
 
 
 def test_missing_credentials_say_what_is_missing():
@@ -239,5 +239,5 @@ def test_python_dash_m_works_and_prints_json():
     result = subprocess.run([sys.executable, "-m", "libshipkore.cli", "providers"], cwd=ROOT, text=True,
                             capture_output=True, timeout=120, env={**os.environ, "PYTHONPATH": ROOT})
     assert result.returncode == 0, result.stderr
-    assert json.loads(result.stdout)["dtdc"] == ["track"]
+    assert json.loads(result.stdout)["trackon"] == ["track"]
     assert "pkg_resources" not in result.stderr

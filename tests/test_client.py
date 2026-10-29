@@ -380,8 +380,8 @@ def test_delivered_shipments_are_never_refetched(kore, tracker, clock):
 
 def test_tracking_works_for_providers_without_credentials(kore, tracker):
     calls, _ = tracker
-    kore.track("999", "dtdc")
-    assert calls == [("dtdc", "999")]
+    kore.track("999", "trackon")
+    assert calls == [("trackon", "999")]
 
 
 def test_track_order_updates_the_delivery_status(kore, tracker):

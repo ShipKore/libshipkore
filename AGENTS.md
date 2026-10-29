@@ -51,4 +51,4 @@ claude plugin validate plugin && claude plugin validate .  # if the claude CLI i
 
 ## Not done yet
 
-Shiprocket NDR and returns (request bodies not readable without an account); Blue Dart (auth endpoint and every response shape unreadable; see the matrix); iThink orders, rates and NDR; DTDC, Xpressbees, Ekart and the other carriers in the matrix; recorded (non-hand-written) fixtures; the CLI (`libshipkore/cli.py`) is read-only on purpose and has no booking commands; only the Delhivery tracker and the two spec trackers (Amazon Shipping, Ekart) have tests.
+Shiprocket NDR and returns (request bodies not readable without an account); Blue Dart (auth endpoint and every response shape unreadable; see the matrix); iThink orders, rates and NDR; DTDC, Xpressbees, Ekart and the other carriers in the matrix; recorded (non-hand-written) fixtures; the CLI (`libshipkore/cli.py`) is read-only on purpose and has no booking commands; only the Delhivery tracker and the three spec trackers (Amazon Shipping, Ekart, Shadowfax) have tests.

@@ -1,0 +1,39 @@
+{
+  "slug": "shadowfax",
+  "name": "Shadowfax",
+  "country": "IN",
+  "source": "Read through a browser: the public page https://www.shadowfax.in/track looks the number up with its own token, and its own call GET saruman.shadowfax.in/web_app/delivery/track/<awb>/ was recorded 2026-10-29 (tests/fixtures/shadowfax_track.json). That endpoint answers 401 to a plain request, so there is no direct layer, and no token is copied. Only one status group (one scan) was seen, so a group holding several sub-events is read as its first one only, and only 'Delivery Attempt Unsucessful' (their spelling) is a seen status; Delivered and Out for delivery are unverified guesses. Times have no timezone; Indian Standard Time matches the page.",
+  "verified_on": "2026-10-29",
+  "browser": {
+    "url": "https://www.shadowfax.in/track",
+    "capture": "/web_app/delivery/track/",
+    "steps": [
+      {
+        "fill": "input[placeholder='Enter AWB Number']",
+        "value": "{waybill}"
+      },
+      {
+        "click": "button:has-text('Track Shipment')"
+      }
+    ]
+  },
+  "response": {
+    "scans": "data",
+    "fields": {
+      "time": "time.0",
+      "message": "sub_status.0",
+      "code": "main_status"
+    },
+    "status": "order_details.final_status",
+    "estimated": "order_details.exp_delivery_date",
+    "time_format": "%Y-%m-%dT%H:%M:%S",
+    "timezone": "+05:30",
+    "estimated_format": "%d %B %Y, %A"
+  },
+  "statuses": {},
+  "status_prefixes": {
+    "Delivery Attempt": "AttemptFail",
+    "Delivered": "Delivered",
+    "Out for delivery": "OutForDelivery"
+  }
+}
