@@ -94,7 +94,7 @@
     "slug": "bluedart",
     "name": "Blue Dart",
     "country": "IN",
-    "supported": true,
+    "supported": false,
     "website": "https://www.bluedart.com",
     "phones": [
       {
@@ -128,7 +128,8 @@
         "https://www.bluedart.com/"
       ],
       "verified_on": "2026-10-29"
-    }
+    },
+    "note": "no tracker: the old scraper's host (bluedart.in) refuses connections, and the tracking form on bluedart.com asks for a captcha, which this library does not solve; Blue Dart's own API needs a licence key (checked 2026-10-29)"
   },
   {
     "slug": "delhivery",
@@ -796,7 +797,7 @@
     "name": "USPS",
     "country": "US",
     "supported": false,
-    "note": "official tracking needs an API key; not built",
+    "note": "official tracking needs an API key; not built. tools.usps.com answers a plain request and a headless browser with 'Access Denied' (a bot filter), although a person's browser gets the page (checked 2026-10-29)",
     "website": "https://www.usps.com",
     "categories": [
       "postal"

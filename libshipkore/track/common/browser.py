@@ -24,6 +24,7 @@ from contextlib import contextmanager
 from libshipkore.common.exceptions import ShipkoreError
 
 DEFAULT_TIMEOUT_MS = 30000
+OPTIONAL_STEP_MS = 3000
 BLOCKED_RESOURCES = {"image", "media", "font"}
 
 
@@ -101,26 +102,58 @@ def render(url, wait_for=None, timeout_ms=DEFAULT_TIMEOUT_MS):
             raise
 
 
-def capture_json(url, match, steps=None, timeout_ms=DEFAULT_TIMEOUT_MS):
+def capture_json(url, match, steps=None, timeout_ms=DEFAULT_TIMEOUT_MS,
+                 block_resources=True):
+    """
+    _capture_json, tried once more if the page's answer was empty or not JSON:
+    some servers answer a lookup with a 200 and no body now and then.
+    """
+    try:
+        return _capture_json(url, match, steps, timeout_ms, block_resources)
+    except ValueError as error:  # json.JSONDecodeError; an unknown step is also a ValueError
+        if "unknown browser step" in str(error):
+            raise
+    return _capture_json(url, match, steps, timeout_ms, block_resources)
+
+
+def _capture_json(url, match, steps, timeout_ms, block_resources):
     """
     Load a page and return the JSON body of the first request the page itself
     makes (in any tab it opens) whose URL contains `match`. The page builds
     the request (cookies, CSRF tokens, headers); we only read the answer.
 
     `steps` act like a visitor on the page first: {"fill": selector, "value": text}
-    types into a field and {"click": selector} presses a button.
+    types into a field and {"click": selector} presses a button; with
+    "optional": true a click is skipped if the element does not appear (a
+    popup that is not always there). Images, media and fonts are not loaded
+    unless block_resources is False, which a page that never goes idle
+    without them (it keeps retrying blocked videos) needs.
     """
-    with browser_page(timeout_ms) as page:
+    with browser_page(timeout_ms, block_resources) as page:
         try:
             with page.context.expect_event(
-                "response", lambda response: match in response.url and response.status == 200
+                "response",
+                # a CORS preflight (OPTIONS) answers 200 with no body: not the data
+                lambda response: match in response.url and response.status == 200
+                and response.request.method != "OPTIONS",
             ) as seen:
                 page.goto(url, wait_until="domcontentloaded")
                 if steps:
-                    page.wait_for_load_state("networkidle")  # let the page's scripts attach
+                    try:
+                        page.wait_for_load_state("networkidle")  # let the page's scripts attach
+                    except Exception as error:
+                        # some pages never go quiet (polling, retries); try the steps anyway
+                        if not _timeout_error(error):
+                            raise
                 for step in steps or []:
                     if "fill" in step:
                         page.fill(step["fill"], step["value"])
+                    elif "click" in step and step.get("optional"):
+                        # a popup that may not show up: skip it when it does not
+                        try:
+                            page.click(step["click"], timeout=OPTIONAL_STEP_MS)
+                        except Exception:
+                            pass
                     elif "click" in step:
                         page.click(step["click"])
                     else:

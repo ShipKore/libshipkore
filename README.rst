@@ -2,7 +2,7 @@
 libshipkore
 ===========
 
-Shipkore: one Python interface to track parcels with 37 couriers and to book, label, cancel and manage
+Shipkore: one Python interface to track parcels with 36 couriers and to book, label, cancel and manage
 shipments with Indian and global carriers, plus an MCP server and a Claude Code plugin so AI agents can
 use it safely. This is first Open source product of Innerkore Technologies. We are commited to do things differently.
 
@@ -317,9 +317,9 @@ What works today
    * - Shiprocket
      - serviceability, rates, book, label, cancel, pickup, tracking (unverified)
      - Login, order, pickup and cancel from its docs; serviceability and AWB shapes are reconstructed; no sandbox
-   * - 37 couriers
+   * - 36 couriers
      - tracking only
-     - Scrapers, APIs and JSON specs; only Delhivery, Ekart, Shadowfax and Amazon Shipping have tests
+     - Scrapers, APIs and JSON specs; only Delhivery, Trackon, Ekart, Safexpress, Shadowfax and Amazon Shipping have tests
 
 The research behind this is `libshipkore/data/provider-capability-matrix.md`, which is also served by the
 MCP server. Shiprocket NDR and returns are not implemented, and the other carriers in the

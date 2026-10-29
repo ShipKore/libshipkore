@@ -1,0 +1,43 @@
+{
+  "slug": "safexpress",
+  "name": "Safexpress",
+  "country": "IN",
+  "source": "The home page https://www.safexpress.com/ tracks a 8, 9 or 12 digit waybill with its own call POST https://dgapi.safexpress.com/sfxweb/waybillinvoicetracking/v1/trackingbytype (body {\"docNo\":[waybill],\"docType\":\"WB\"}); the JSON it receives was recorded 2026-10-29 for a delivered waybill (tests/fixtures/safexpress_trackingbytype.json). That call carries a token the page fetches from its own API first, so there is no direct layer and no token is copied: the browser reads the page's own response. The page opens a promotional popup (.custom-banner) that blocks clicks, so the first step closes it when it shows. No location per scan is given, only origin and destination for the whole waybill. Only the statuses BOOKED, IN-TRANSIT, ARRIVED AT DESTINATION, OUT FOR DELIVERY, UN-DELIVERED and DELIVERED were seen. Times have no timezone; Indian Standard Time is assumed. The page never goes idle with its videos blocked, so this spec loads images and media (load_resources).",
+  "verified_on": "2026-10-29",
+  "browser": {
+    "url": "https://www.safexpress.com/",
+    "capture": "/waybillinvoicetracking/v1/trackingbytype",
+    "steps": [
+      {
+        "click": ".custom-banner button.btn-close",
+        "optional": true
+      },
+      {
+        "fill": "input[placeholder*='Waybill Number'] >> visible=true",
+        "value": "{waybill}"
+      },
+      {
+        "click": "button.col-md-2:has-text('Track') >> visible=true"
+      }
+    ],
+    "load_resources": true
+  },
+  "response": {
+    "scans": "data.tracking.0.details",
+    "fields": {
+      "time": "eventDate",
+      "message": "eventDesc",
+      "code": "status"
+    },
+    "time_format": "%Y-%m-%d %H:%M:%S",
+    "timezone": "+05:30"
+  },
+  "statuses": {
+    "BOOKED": "InfoReceived",
+    "IN-TRANSIT": "InTransit",
+    "ARRIVED AT DESTINATION": "InTransit",
+    "OUT FOR DELIVERY": "OutForDelivery",
+    "UN-DELIVERED": "AttemptFail",
+    "DELIVERED": "Delivered"
+  }
+}

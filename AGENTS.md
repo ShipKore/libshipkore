@@ -1,6 +1,6 @@
 # libshipkore: notes for coding agents
 
-A Python library that tracks parcels with 37 couriers (34 scrapers and three JSON specs) and books, labels, cancels and manages orders with a growing set of carriers (Delhivery and Shiprocket so far, plus iThink tracking), behind one interface. It also ships an MCP server and a Claude Code plugin so AI agents can use it.
+A Python library that tracks parcels with 36 couriers (32 scrapers and four JSON specs) and books, labels, cancels and manages orders with a growing set of carriers (Delhivery and Shiprocket so far, plus iThink tracking), behind one interface. It also ships an MCP server and a Claude Code plugin so AI agents can use it.
 
 Python >= 3.10 and pydantic 2 only. The working language of the repo is English; the main users are in India.
 
@@ -51,4 +51,4 @@ claude plugin validate plugin && claude plugin validate .  # if the claude CLI i
 
 ## Not done yet
 
-Shiprocket NDR and returns (request bodies not readable without an account); Blue Dart (auth endpoint and every response shape unreadable; see the matrix); iThink orders, rates and NDR; DTDC, Xpressbees, Ekart and the other carriers in the matrix; recorded (non-hand-written) fixtures; the CLI (`libshipkore/cli.py`) is read-only on purpose and has no booking commands; only the Delhivery tracker and the three spec trackers (Amazon Shipping, Ekart, Shadowfax) have tests.
+Shiprocket NDR and returns (request bodies not readable without an account); Blue Dart (auth endpoint and every response shape unreadable; see the matrix); iThink orders, rates and NDR; DTDC, Xpressbees, Ekart and the other carriers in the matrix; recorded (non-hand-written) fixtures; the CLI (`libshipkore/cli.py`) is read-only on purpose and has no booking commands; only the Delhivery and Trackon trackers and the four spec trackers (Amazon Shipping, Ekart, Safexpress, Shadowfax) have tests.

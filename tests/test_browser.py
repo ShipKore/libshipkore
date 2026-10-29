@@ -27,8 +27,9 @@ FakeTimeoutError.__name__ = "TimeoutError"  # what Playwright's is called
 
 
 class FakeResponse:
-    def __init__(self, url, body, status=200):
+    def __init__(self, url, body, status=200, method="GET"):
         self.url, self._body, self.status = url, body, status
+        self.request = types.SimpleNamespace(method=method)
 
     def json(self):
         return self._body
@@ -59,7 +60,9 @@ class FakePage:
     def fill(self, selector, value):
         self.world.setdefault("acts", []).append(("fill", selector, value))
 
-    def click(self, selector):
+    def click(self, selector, timeout=None):
+        if selector in self.world.get("absent", ()):
+            raise FakeTimeoutError(f"no {selector}")
         self.world.setdefault("acts", []).append(("click", selector))
 
     def expect_event(self, name, predicate):
@@ -146,6 +149,36 @@ def test_steps_act_like_a_visitor_after_the_page_has_settled(playwright):
     assert playwright["acts"] == [("fill", "#awb", "AWB1"), ("click", "button")]
     with pytest.raises(ValueError, match="unknown browser step"):
         browser.capture_json("https://x.test", "/track/", [{"hover": "a"}])
+
+
+def test_a_cors_preflight_is_not_taken_for_the_answer(playwright):
+    playwright["responses"] = [
+        FakeResponse("https://api.test/track/AWB1/", {}, method="OPTIONS"),
+        FakeResponse("https://api.test/track/AWB1/", {"ok": 1}, method="POST"),
+    ]
+    assert browser.capture_json("https://x.test", "/track/") == {"ok": 1}
+
+
+def test_an_empty_answer_is_tried_once_more(playwright):
+    class Empty(FakeResponse):
+        def json(self):
+            raise json.JSONDecodeError("Expecting value", "", 0)
+
+    playwright["responses"] = [Empty("https://api.test/track/AWB1/", None)]
+    with pytest.raises(json.JSONDecodeError):
+        browser.capture_json("https://x.test", "/track/")
+    assert playwright["visited"] == ["https://x.test", "https://x.test"]  # two attempts, then it gives up
+
+
+def test_an_optional_click_is_skipped_when_the_popup_is_not_there(playwright):
+    playwright["responses"] = [FakeResponse("https://api.test/track/AWB1/", {"ok": 1})]
+    playwright["absent"] = {".popup"}
+    steps = [{"click": ".popup", "optional": True}, {"fill": "#awb", "value": "AWB1"}]
+    assert browser.capture_json("https://x.test", "/track/", steps) == {"ok": 1}
+    assert playwright["acts"] == [("fill", "#awb", "AWB1")]
+    playwright["absent"] = {".popup"}  # a click that is not optional still fails
+    with pytest.raises(browser.BrowserTimeout):
+        browser.capture_json("https://x.test", "/track/", [{"click": ".popup"}])
 
 
 def test_a_failed_response_is_not_taken_for_the_answer(playwright):
@@ -310,6 +343,30 @@ def test_shadowfax_fills_the_form_then_reads_the_pages_own_call(monkeypatch):
     assert track.checkpoints[0].checkpoint_time.isoformat() == "2026-10-28T21:26:20+05:30"
     assert track.checkpoints[0].message.startswith("Delivery attempt failed")
     assert track.estimated_date.isoformat() == "2026-10-28T00:00:00+05:30"
+
+
+def test_safexpress_closes_the_popup_then_reads_the_pages_own_call(monkeypatch):
+    with open(os.path.join(HERE, "fixtures", "safexpress_trackingbytype.json")) as handle:
+        recorded = {k: v for k, v in json.load(handle).items() if k != "_note"}
+    seen = []
+    monkeypatch.setattr(browser, "capture_json",
+                        lambda url, match, steps=None, **extra: seen.append((url, match, steps, extra)) or recorded)
+    track = get_track_data("safexpress", "100035812989")
+    url, match, steps, extra = seen[0]
+    assert url == "https://www.safexpress.com/" and match.endswith("/trackingbytype")
+    assert extra == {"block_resources": False}  # its videos keep the page busy when blocked
+    assert steps[0].get("optional") is True and steps[1]["value"] == "100035812989"
+    assert track.status.value == "Delivered" and track.substatus == "DELIVERED"
+    assert len(track.checkpoints) == 13
+    assert track.checkpoints[0].checkpoint_time.isoformat() == "2026-05-16T23:59:59+05:30"
+    statuses = {c.substatus: c.status.value for c in track.checkpoints}
+    assert statuses["UN-DELIVERED"] == "AttemptFail" and statuses["BOOKED"] == "InfoReceived"
+
+
+def test_the_old_safexpress_scraper_is_gone_and_the_spec_is_registered():
+    import libshipkore.track.tracker as tracker_package
+    assert not os.path.exists(os.path.join(os.path.dirname(tracker_package.__file__), "safexpress.py"))
+    assert "safexpress" in track_registry
 
 
 def test_dtdc_is_not_claimed_the_directory_says_why():

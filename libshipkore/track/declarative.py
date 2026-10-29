@@ -36,7 +36,10 @@ The page is opened in a headless browser and the JSON of the request it makes
 whose URL contains "capture" is read with the same "response" rules. Optional
 "steps" ([{"fill": selector, "value": "{waybill}"}, {"click": selector}]) act
 like a visitor first, for pages that only look a number up after a form submit. The order
-is request first, browser only if that fails (see track/common/browser.py).
+is request first, browser only if that fails (see track/common/browser.py). A click step with
+"optional": true is skipped when its element does not show (a popup that is not always
+there). "load_resources": true in the browser block keeps images and media loading, for a page
+that never goes idle without them. An answer that is empty or not JSON is tried once more.
 "time_format" may be "epoch_ms" for millisecond timestamps; "estimated_format"
 sets a different format for the estimate (default: the same).
 
@@ -170,7 +173,8 @@ class DeclarativeTracker(LayeredTracker):
         if not page:
             raise NotImplementedError("no browser fallback for this carrier")
         call = fill(page, self.waybill)
-        return browser.capture_json(call["url"], call["capture"], call.get("steps"))
+        extra = {"block_resources": False} if call.get("load_resources") else {}
+        return browser.capture_json(call["url"], call["capture"], call.get("steps"), **extra)
 
     def _status(self, word):
         if word is None:

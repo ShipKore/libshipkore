@@ -82,7 +82,7 @@ def test_providers_shows_what_each_one_can_do():
     providers = json.loads(result.output)
     assert providers["trackon"] == ["track"]
     assert {"create_shipment", "label", "ndr_action", "track"} <= set(providers["delhivery"])
-    assert len(providers) == 39
+    assert len(providers) == 38
 
 
 # tracking ------------------------------------------------------------------
